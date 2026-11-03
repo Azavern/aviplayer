@@ -57,6 +57,59 @@ class PreferenceDataSource @Inject constructor(
         dataStore.edit { it[KEY_USE_SYSTEM_ACCENT] = enabled }
     }
 
+    // ---- Judul player (Milestone 7) ----
+
+    fun getTitleFontSize(): Flow<Float> = dataStore.data.map { prefs ->
+        prefs[KEY_TITLE_FONT_SIZE] ?: 14f
+    }
+
+    suspend fun setTitleFontSize(sizeSp: Float) {
+        dataStore.edit { it[KEY_TITLE_FONT_SIZE] = sizeSp }
+    }
+
+    fun getTitleMaxLines(): Flow<Int> = dataStore.data.map { prefs ->
+        prefs[KEY_TITLE_MAX_LINES] ?: 1
+    }
+
+    suspend fun setTitleMaxLines(maxLines: Int) {
+        dataStore.edit { it[KEY_TITLE_MAX_LINES] = maxLines }
+    }
+
+    fun getTitleColor(): Flow<Long> = dataStore.data.map { prefs ->
+        prefs[KEY_TITLE_COLOR] ?: 0xFFFFFFFFL
+    }
+
+    suspend fun setTitleColor(color: Long) {
+        dataStore.edit { it[KEY_TITLE_COLOR] = color }
+    }
+
+    fun getTitleBold(): Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[KEY_TITLE_BOLD] ?: false
+    }
+
+    suspend fun setTitleBold(bold: Boolean) {
+        dataStore.edit { it[KEY_TITLE_BOLD] = bold }
+    }
+
+    fun getTitleMarquee(): Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[KEY_TITLE_MARQUEE] ?: true
+    }
+
+    suspend fun setTitleMarquee(enabled: Boolean) {
+        dataStore.edit { it[KEY_TITLE_MARQUEE] = enabled }
+    }
+
+    // ---- Layout kontrol player (Milestone 7) ----
+
+    /** JSON ControlLayoutConfig; null = belum pernah disimpan. */
+    fun getControlLayoutJson(): Flow<String?> = dataStore.data.map { prefs ->
+        prefs[KEY_CONTROL_LAYOUT_JSON]
+    }
+
+    suspend fun setControlLayoutJson(json: String) {
+        dataStore.edit { it[KEY_CONTROL_LAYOUT_JSON] = json }
+    }
+
     companion object {
         // String keys
         val KEY_THEME_MODE = stringPreferencesKey(Constants.PREF_THEME_MODE)

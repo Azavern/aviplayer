@@ -48,12 +48,24 @@ class PlayerViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(PlayerUiState())
     val uiState: StateFlow<PlayerUiState> = _uiState.asStateFlow()
 
-    init {
-        // Tema mengikuti SettingsRepository (Milestone 4): PlayerActivity
-        // meneruskan themeConfig dari state ini ke AppTheme.
-        viewModelScope.launch {
-            settingsRepository.getThemeConfig().collect { config ->
-                _uiState.update { it.copy(themeConfig = config) }
+    private var uiConfigJob: Job? = null
+
+    /**
+     * Muat konfigurasi tampilan (judul + layout kontrol + tema) dari
+     * SettingsRepository (Milestone 7). Dipanggil dari [initPlayer];
+     * berjalan sekali selama ViewModel hidup. Tema ikut tersinkron
+     * dari sini (menggantikan collect tema terpisah Milestone 4).
+     */
+    fun loadPlayerUiConfig() {
+        if (uiConfigJob?.isActive == true) return
+        uiConfigJob = viewModelScope.launch {
+            settingsRepository.getPlayerUiConfig().collect { config ->
+                _uiState.update {
+                    it.copy(
+                        playerUiConfig = config,
+                        themeConfig = config.themeConfig
+                    )
+                }
             }
         }
     }
@@ -65,6 +77,7 @@ class PlayerViewModel @Inject constructor(
     private var initializedPath: String? = null
 
     fun initPlayer(path: String, id: String, title: String) {
+        loadPlayerUiConfig()
         if (path.isBlank()) {
             _uiState.update {
                 it.copy(playerState = PlayerState.Error("Path video tidak diberikan"))
@@ -170,7 +183,7 @@ class PlayerViewModel @Inject constructor(
      * Tangkap frame video pada posisi putar sekarang dan simpan ke
      * galeri (Milestone 6). Frame mentah dari decoder lewat
      * MediaMetadataRetriever — bukan screenshot. Hasilnya masuk
-     * uiState.captureResult untuk ditampilkan sebagai Snackbar.
+     * uiState.captureResult untuk ditampilkan sebagai lencana ikon.
      */
     fun captureFrame() {
         val state = _uiState.value
@@ -194,7 +207,7 @@ class PlayerViewModel @Inject constructor(
         }
     }
 
-    /** Dipanggil PlayerScreen setelah Snackbar capture ditampilkan. */
+    /** Dipanggil PlayerScreen setelah lencana capture selesai tampil. */
     fun onCaptureResultConsumed() {
         _uiState.update { it.copy(captureResult = null) }
     }

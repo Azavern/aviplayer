@@ -4,6 +4,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -32,10 +33,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.azavern.aviplayer.R
+import com.azavern.aviplayer.data.model.ControlSlot
+import com.azavern.aviplayer.data.model.TitleConfig
+import com.azavern.aviplayer.ui.player.PlayerUiState
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -55,10 +60,21 @@ import java.util.Locale
  * Tombol-tombol referensi yang fiturnya belum ada (PiP, subtitle,
  * volume, A-B, menu titik tiga) sengaja belum digambar; mereka datang
  * bersama milestone fiturnya masing-masing.
+ *
+ * Milestone 7: gaya teks judul mengikuti [TitleConfig] (ukuran,
+ * baris, warna, tebal, marquee), dan slot atas layout kontrol
+ * dirender di sini — [topLeftSlot] sebelum panah kembali,
+ * [topRightSlots] sesudah indikator baterai/jam. Keduanya kosong
+ * pada layout bawaan, jadi bar ini tampil persis seperti sebelumnya.
  */
 @Composable
 fun TitleDisplay(
     title: String,
+    titleConfig: TitleConfig,
+    topLeftSlot: ControlSlot,
+    topRightSlots: List<ControlSlot>,
+    uiState: PlayerUiState,
+    actions: PlayerControlActions,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -68,6 +84,9 @@ fun TitleDisplay(
             .padding(horizontal = 4.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        if (topLeftSlot != ControlSlot.EMPTY) {
+            ControlSlotButton(slot = topLeftSlot, uiState = uiState, actions = actions)
+        }
         IconButton(onClick = onBackClick) {
             Icon(
                 imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
@@ -77,13 +96,31 @@ fun TitleDisplay(
         }
         Text(
             text = title,
-            color = Color.White,
-            fontSize = 14.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f)
+            color = Color(titleConfig.color),
+            fontSize = titleConfig.fontSizeSp.sp,
+            fontWeight = if (titleConfig.isBold) FontWeight.Bold else FontWeight.Normal,
+            maxLines = titleConfig.maxLines,
+            overflow = if (titleConfig.marqueeEnabled) {
+                TextOverflow.Visible
+            } else {
+                TextOverflow.Ellipsis
+            },
+            modifier = Modifier
+                .weight(1f)
+                .then(
+                    if (titleConfig.marqueeEnabled && titleConfig.maxLines == 1) {
+                        Modifier.basicMarquee()
+                    } else {
+                        Modifier
+                    }
+                )
         )
         SystemStatusIndicator()
+        topRightSlots.forEach { slot ->
+            if (slot != ControlSlot.EMPTY) {
+                ControlSlotButton(slot = slot, uiState = uiState, actions = actions)
+            }
+        }
     }
 }
 

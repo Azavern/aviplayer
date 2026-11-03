@@ -4,23 +4,33 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.azavern.aviplayer.data.model.ThemeConfig
+import androidx.activity.viewModels
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.azavern.aviplayer.ui.customization.components.CustomizationScreen
 import com.azavern.aviplayer.ui.theme.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 /**
- * Layar kustomisasi (tema, judul, kontrol, folder). Shell Milestone 0 —
- * isi dibangun pada milestone kustomisasi.
+ * Layar kustomisasi player (Milestone 7): editor gaya judul dan
+ * penukar posisi tombol. Tema mengikuti konfigurasi berjalan dari
+ * SettingsRepository lewat CustomizationViewModel.
  */
 @AndroidEntryPoint
 class CustomizationActivity : ComponentActivity() {
+
+    private val viewModel: CustomizationViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            AppTheme(themeConfig = ThemeConfig.Default) {
-                // Konten Kustomisasi — milestone kustomisasi.
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            AppTheme(themeConfig = uiState.themeConfig) {
+                CustomizationScreen(
+                    viewModel = viewModel,
+                    onBackClick = { finish() }
+                )
             }
         }
     }

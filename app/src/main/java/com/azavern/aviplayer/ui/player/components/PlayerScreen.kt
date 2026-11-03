@@ -6,24 +6,32 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.media3.exoplayer.ExoPlayer
-import com.azavern.aviplayer.R
 import com.azavern.aviplayer.player.core.PlayerState
 import com.azavern.aviplayer.ui.player.CaptureResult
 import com.azavern.aviplayer.ui.player.PlayerUiState
+import kotlinx.coroutines.delay
 
 /**
  * Layar Player — mengikuti referensi Veo (2026-11-04): permukaan video
@@ -54,22 +62,24 @@ fun PlayerScreen(
     onCaptureResultConsumed: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
-    val captureSuccessText = stringResource(R.string.player_capture_success)
-    val captureFailedText = stringResource(R.string.player_capture_failed)
-
-    // Snackbar hasil capture (Milestone 6): tampil sekali per hasil,
-    // lalu state dibersihkan lewat onCaptureResultConsumed.
+    // Lencana hasil capture tampil ±1,5 detik, lalu state dibersihkan
+    // lewat onCaptureResultConsumed supaya tidak muncul dua kali.
     LaunchedEffect(uiState.captureResult) {
-        when (val result = uiState.captureResult) {
-            is CaptureResult.Success -> snackbarHostState.showSnackbar(captureSuccessText)
-            is CaptureResult.Error -> snackbarHostState.showSnackbar(
-                "$captureFailedText: ${result.message}"
-            )
-            null -> Unit
+        if (uiState.captureResult != null) {
+            delay(1500)
+            onCaptureResultConsumed()
         }
-        if (uiState.captureResult != null) onCaptureResultConsumed()
     }
+
+    val controlActions = PlayerControlActions(
+        onPlayPause = onPlayPauseClick,
+        onPrevious = onPreviousClick,
+        onNext = {},
+        onRotate = onRotateClick,
+        onCapture = onCaptureClick,
+        onSpeed = onSpeedClick
+    )
+    val layout = uiState.playerUiConfig.controlLayoutConfig
 
     Box(
         modifier = modifier
@@ -114,16 +124,47 @@ fun PlayerScreen(
 
         TitleDisplay(
             title = uiState.videoTitle,
+            titleConfig = uiState.playerUiConfig.titleConfig,
+            topLeftSlot = layout.topLeftSlot,
+            topRightSlots = layout.topRightSlots,
+            uiState = uiState,
+            actions = controlActions,
             onBackClick = onBackClick,
             modifier = Modifier.align(Alignment.TopCenter)
         )
 
-        SnackbarHost(
-            hostState = snackbarHostState,
+        // Notifikasi hasil capture (perintah Veo 2026-11-04, mengganti
+        // Snackbar kotak teks): lingkaran berisi centang (atau silang
+        // bila gagal) yang menempel di tepi kanan layar, nyaris keluar
+        // — hanya disisakan margin beberapa piksel. Meluncur masuk
+        // dari kanan dan menghilang sendiri.
+        AnimatedVisibility(
+            visible = uiState.captureResult != null,
+            enter = slideInHorizontally { it } + fadeIn(),
+            exit = slideOutHorizontally { it } + fadeOut(),
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(horizontal = 24.dp, vertical = 118.dp)
-        )
+                .align(Alignment.CenterEnd)
+                .padding(end = 6.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(46.dp)
+                    .clip(CircleShape)
+                    .background(Color.Black.copy(alpha = 0.55f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = if (uiState.captureResult is CaptureResult.Success) {
+                        Icons.Filled.Check
+                    } else {
+                        Icons.Filled.Close
+                    },
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(26.dp)
+                )
+            }
+        }
 
         Column(
             modifier = Modifier
@@ -137,14 +178,9 @@ fun PlayerScreen(
                 previewPositionMs = uiState.seekPreviewMs
             )
             PlayerControls(
-                isPlaying = uiState.isPlaying,
-                playbackSpeed = uiState.playbackSpeed,
-                orientationMode = uiState.orientationMode,
-                onPreviousClick = onPreviousClick,
-                onPlayPauseClick = onPlayPauseClick,
-                onSpeedClick = onSpeedClick,
-                onRotateClick = onRotateClick,
-                onCaptureClick = onCaptureClick
+                layout = layout,
+                uiState = uiState,
+                actions = controlActions
             )
         }
     }

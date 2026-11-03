@@ -2,6 +2,7 @@ package com.azavern.aviplayer.ui.player
 
 import android.net.Uri
 import com.azavern.aviplayer.data.model.OrientationMode
+import com.azavern.aviplayer.data.model.PlayerUiConfig
 import com.azavern.aviplayer.data.model.ThemeConfig
 import com.azavern.aviplayer.player.core.PlayerState
 
@@ -50,5 +51,7 @@ data class PlayerUiState(
     /** Posisi pratinjau saat gesture seek aktif; null = tidak ada pratinjau. */
     val seekPreviewMs: Long? = null,
     /** Hasil capture frame terakhir; null = belum ada / sudah ditampilkan. */
-    val captureResult: CaptureResult? = null
+    val captureResult: CaptureResult? = null,
+    /** Konfigurasi tampilan player dari SettingsRepository (Milestone 7). */
+    val playerUiConfig: PlayerUiConfig = PlayerUiConfig.Default
 )

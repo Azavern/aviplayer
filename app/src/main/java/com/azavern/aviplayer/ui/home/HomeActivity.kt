@@ -13,6 +13,7 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.azavern.aviplayer.ui.customization.CustomizationActivity
 import com.azavern.aviplayer.ui.home.components.HomeScreen
 import com.azavern.aviplayer.ui.player.PlayerActivity
 import com.azavern.aviplayer.ui.theme.AppTheme
@@ -55,7 +56,8 @@ class HomeActivity : ComponentActivity() {
                 HomeScreen(
                     viewModel = viewModel,
                     onNavigateToPlayer = { path, id, title -> openPlayer(path, id, title) },
-                    onRequestPermission = { permissionLauncher.launch(readPermission) }
+                    onRequestPermission = { permissionLauncher.launch(readPermission) },
+                    onNavigateToCustomization = { openCustomization() }
                 )
             }
         }
@@ -73,6 +75,10 @@ class HomeActivity : ComponentActivity() {
         }
         // Segarkan info tontonan (progres & video terakhir) sepulang dari player.
         viewModel.onResume()
+    }
+
+    private fun openCustomization() {
+        startActivity(Intent(this, CustomizationActivity::class.java))
     }
 
     private fun isPermissionGranted(): Boolean =
