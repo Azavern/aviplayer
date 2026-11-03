@@ -17,6 +17,17 @@
     <string name="customization_title">Kustomisasi Player</string>
     <string name="customization_tab_title">Judul</string>
     <string name="customization_tab_controls">Tombol</string>
+    <string name="customization_tab_theme">Tema</string>
+    <string name="theme_editor_mode">Mode tema</string>
+    <string name="theme_mode_system">Sistem</string>
+    <string name="theme_mode_light">Terang</string>
+    <string name="theme_mode_dark">Gelap</string>
+    <string name="theme_mode_amoled">AMOLED</string>
+    <string name="theme_editor_dynamic">Warna dinamis sistem (Material You)</string>
+    <string name="theme_editor_accent">Warna aksen</string>
+    <string name="theme_preview_background">Latar</string>
+    <string name="theme_preview_surface">Permukaan</string>
+    <string name="theme_preview_accent">Aksen</string>
     <string name="title_editor_font_size">Ukuran font judul</string>
     <string name="title_editor_lines">Jumlah baris judul</string>
     <string name="title_editor_bold">Teks tebal</string>

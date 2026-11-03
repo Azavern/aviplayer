@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.azavern.aviplayer.data.model.ControlLayoutConfig
 import com.azavern.aviplayer.data.model.ControlSlot
+import com.azavern.aviplayer.data.model.ThemeConfig
 import com.azavern.aviplayer.data.model.TitleConfig
 import com.azavern.aviplayer.data.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -58,6 +59,11 @@ class CustomizationViewModel @Inject constructor(
 
     fun onTitleConfigChanged(config: TitleConfig) {
         viewModelScope.launch { settingsRepository.updateTitleConfig(config) }
+    }
+
+    /** Perubahan tema dari editor Tema (Milestone 8). */
+    fun onThemeConfigChanged(config: ThemeConfig) {
+        viewModelScope.launch { settingsRepository.updateThemeConfig(config) }
     }
 
     fun onControlLayoutChanged(config: ControlLayoutConfig) {

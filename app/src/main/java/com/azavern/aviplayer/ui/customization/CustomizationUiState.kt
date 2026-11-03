@@ -4,13 +4,13 @@ import com.azavern.aviplayer.data.model.ControlLayoutConfig
 import com.azavern.aviplayer.data.model.ThemeConfig
 import com.azavern.aviplayer.data.model.TitleConfig
 
-/** Tab yang tersedia di layar Kustomisasi (Milestone 7). */
-enum class CustomizationTab { TITLE, CONTROLS }
+/** Tab yang tersedia di layar Kustomisasi (Milestone 7 + 8). */
+enum class CustomizationTab { TITLE, CONTROLS, THEME }
 
 /**
- * State layar Kustomisasi (Blueprint Bagian 7, dipersempit untuk
- * Milestone 7: tema menyusul di Milestone 8 dan whitelist folder
- * di milestone folder — state-nya ditambah saat itu).
+ * State layar Kustomisasi (Blueprint Bagian 7, dipersempit:
+ * whitelist folder menyusul di milestone folder — state-nya
+ * ditambah saat itu).
  */
 data class CustomizationUiState(
     val titleConfig: TitleConfig = TitleConfig.Default,
