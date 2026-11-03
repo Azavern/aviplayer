@@ -167,6 +167,39 @@ class PlayerViewModel @Inject constructor(
     }
 
     /**
+     * Tangkap frame video pada posisi putar sekarang dan simpan ke
+     * galeri (Milestone 6). Frame mentah dari decoder lewat
+     * MediaMetadataRetriever — bukan screenshot. Hasilnya masuk
+     * uiState.captureResult untuk ditampilkan sebagai Snackbar.
+     */
+    fun captureFrame() {
+        val state = _uiState.value
+        if (state.videoPath.isBlank()) return
+        val positionMs = playerManager.getCurrentPosition()
+        viewModelScope.launch {
+            val captureResult = frameCapturer.captureFrame(state.videoPath, positionMs).fold(
+                onSuccess = { bitmap ->
+                    frameCapturer.saveFrameToGallery(bitmap, state.videoTitle).fold(
+                        onSuccess = { uri -> CaptureResult.Success(uri) },
+                        onFailure = { error ->
+                            CaptureResult.Error(error.message ?: "Gagal menyimpan frame")
+                        }
+                    )
+                },
+                onFailure = { error ->
+                    CaptureResult.Error(error.message ?: "Gagal menangkap frame")
+                }
+            )
+            _uiState.update { it.copy(captureResult = captureResult) }
+        }
+    }
+
+    /** Dipanggil PlayerScreen setelah Snackbar capture ditampilkan. */
+    fun onCaptureResultConsumed() {
+        _uiState.update { it.copy(captureResult = null) }
+    }
+
+    /**
      * Sinkronisasi level awal dari sistem, dipanggil PlayerActivity
      * sebelum konten digambar dan saat kembali ke layar.
      */
