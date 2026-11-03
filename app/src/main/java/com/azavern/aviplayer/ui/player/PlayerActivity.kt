@@ -49,7 +49,12 @@ class PlayerActivity : ComponentActivity() {
         val videoPath = intent.getStringExtra(Constants.KEY_VIDEO_PATH).orEmpty()
         val videoId = intent.getStringExtra(Constants.KEY_VIDEO_ID).orEmpty()
         val videoTitle = intent.getStringExtra(Constants.KEY_VIDEO_TITLE).orEmpty()
-        viewModel.initPlayer(videoPath, videoId, videoTitle)
+        // Antrean konteks putar (Milestone 10): kelompok video asal buka.
+        val queuePaths = intent.getStringArrayListExtra(Constants.KEY_QUEUE_PATHS)
+            .orEmpty()
+        val queueTitles = intent.getStringArrayListExtra(Constants.KEY_QUEUE_TITLES)
+            .orEmpty()
+        viewModel.initPlayer(videoPath, videoId, videoTitle, queuePaths, queueTitles)
         viewModel.setSystemAutoRotate(readSystemAutoRotate())
         // Level awal gesture (Milestone 5) disinkronkan sebelum konten
         // digambar, supaya efek penerapan tidak melompat dari nilai bawaan.
@@ -95,6 +100,7 @@ class PlayerActivity : ComponentActivity() {
                     uiState = uiState,
                     player = viewModel.player,
                     onPreviousClick = viewModel::onPrevious,
+                    onNextClick = viewModel::onNext,
                     onPlayPauseClick = viewModel::togglePlayPause,
                     onSeekTo = viewModel::seekTo,
                     onRotateClick = viewModel::cycleOrientationMode,

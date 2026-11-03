@@ -6,9 +6,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.PlaylistPlay
 import androidx.compose.material.icons.outlined.VideoLibrary
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -16,11 +17,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -31,6 +36,7 @@ import com.azavern.aviplayer.R
 import com.azavern.aviplayer.ui.home.HomeNavigation
 import com.azavern.aviplayer.ui.home.HomeTab
 import com.azavern.aviplayer.ui.home.HomeViewModel
+import kotlinx.coroutines.launch
 
 /**
  * Root composable Beranda (Blueprint Bagian 7): TopAppBar + konten
@@ -44,7 +50,7 @@ import com.azavern.aviplayer.ui.home.HomeViewModel
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
-    onNavigateToPlayer: (path: String, id: String, title: String) -> Unit,
+    onNavigateToPlayer: (HomeNavigation.ToPlayer) -> Unit,
     onRequestPermission: () -> Unit,
     onNavigateToCustomization: () -> Unit
 ) {
@@ -53,9 +59,18 @@ fun HomeScreen(
     LaunchedEffect(uiState.navigation) {
         val navigation = uiState.navigation
         if (navigation is HomeNavigation.ToPlayer) {
-            onNavigateToPlayer(navigation.path, navigation.id, navigation.title)
+            onNavigateToPlayer(navigation)
             viewModel.onNavigationHandled()
         }
+    }
+
+    // State daftar video di-hoist ke sini supaya FAB "kembali ke atas"
+    // bisa mengendalikan daftar yang sama (permintaan Veo 2026-11-04:
+    // posisi daftar suka nyangkut di bawah saat pencarian).
+    val videoListState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+    val showScrollTopButton by remember {
+        derivedStateOf { videoListState.firstVisibleItemIndex > 2 }
     }
 
     Scaffold(
@@ -111,7 +126,9 @@ fun HomeScreen(
                             playbackPositions = uiState.playbackPositions,
                             lastPlayedVideoId = uiState.lastPlayedVideoId,
                             onVideoClick = viewModel::onVideoClicked,
-                            onCloseFolder = viewModel::onCloseFolder
+                            onCloseFolder = viewModel::onCloseFolder,
+                            onAddToPlaylistClick = viewModel::onAddToPlaylistRequested,
+                            listState = videoListState
                         )
                     }
                     HomeTab.FOLDER -> FolderGridScreen(
@@ -119,9 +136,71 @@ fun HomeScreen(
                         isLoading = uiState.isLoading,
                         onFolderClick = viewModel::onFolderClicked
                     )
-                    HomeTab.PLAYLIST -> PlaylistEmptyContent()
+                    HomeTab.PLAYLIST -> {
+                        val openPlaylist = uiState.playlists
+                            .firstOrNull { it.id == uiState.openPlaylistId }
+                        if (uiState.openPlaylistId != null && openPlaylist != null) {
+                            PlaylistDetailScreen(
+                                playlist = openPlaylist,
+                                entries = uiState.playlistEntries,
+                                onBack = viewModel::onClosePlaylist,
+                                onPlayAll = {
+                                    uiState.playlistEntries.firstOrNull()?.let {
+                                        viewModel.onPlayPlaylist(it)
+                                    }
+                                },
+                                onEntryClick = viewModel::onPlayPlaylist,
+                                onRemoveEntry = viewModel::removePlaylistEntry,
+                                onMoveEntry = viewModel::movePlaylistEntry,
+                                onReorderFinished = viewModel::persistPlaylistEntryOrder
+                            )
+                        } else {
+                            PlaylistScreen(
+                                playlists = uiState.playlists,
+                                onPlaylistClick = viewModel::onPlaylistClicked,
+                                onCreatePlaylist = viewModel::createPlaylist,
+                                onRenamePlaylist = viewModel::renamePlaylist,
+                                onDeletePlaylist = viewModel::deletePlaylist
+                            )
+                        }
+                    }
                 }
             }
+
+            // FAB kembali ke atas: hanya di tab Video saat daftar sudah
+            // bergeser jauh dari atas. Box konten sudah dipangkas
+            // innerPadding, jadi FAB otomatis bertengger tepat di atas
+            // bar mini / navigasi bawah.
+            if (uiState.hasPermission && uiState.activeTab == HomeTab.VIDEO &&
+                showScrollTopButton
+            ) {
+                SmallFloatingActionButton(
+                    onClick = {
+                        coroutineScope.launch { videoListState.animateScrollToItem(0) }
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 16.dp, bottom = 16.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.KeyboardArrowUp,
+                        contentDescription = stringResource(R.string.home_scroll_top)
+                    )
+                }
+            }
+        }
+
+        // Dialog pemilih playlist untuk video yang menunggu ditambahkan.
+        uiState.pendingPlaylistVideo?.let { pendingVideo ->
+            PlaylistPickerDialog(
+                videoTitle = pendingVideo.name,
+                playlists = uiState.playlists,
+                onPick = viewModel::addPendingVideoToPlaylist,
+                onCreateAndPick = viewModel::createPlaylistAndAddPending,
+                onDismiss = viewModel::onAddToPlaylistDismissed
+            )
         }
     }
 }
@@ -160,41 +239,5 @@ private fun PermissionContent(onRequestPermission: () -> Unit) {
         ) {
             Text(stringResource(R.string.home_permission_button))
         }
-    }
-}
-
-/**
- * Tab Playlist di Milestone 3 baru menampilkan empty state yang jujur:
- * daftar playlist memang masih kosong; CRUD-nya dibangun pada
- * milestone Playlist.
- */
-@Composable
-private fun PlaylistEmptyContent() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            Icons.Outlined.PlaylistPlay,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(48.dp)
-        )
-        Text(
-            text = stringResource(R.string.home_empty_playlists),
-            style = MaterialTheme.typography.titleMedium,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 12.dp)
-        )
-        Text(
-            text = stringResource(R.string.home_empty_playlists_hint),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 4.dp)
-        )
     }
 }

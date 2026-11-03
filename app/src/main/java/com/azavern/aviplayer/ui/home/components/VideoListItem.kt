@@ -60,6 +60,7 @@ fun VideoListItem(
     progressFraction: Float?,
     isLastPlayed: Boolean,
     onVideoClick: (VideoItem) -> Unit,
+    onAddToPlaylistClick: (VideoItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
@@ -159,6 +160,13 @@ fun VideoListItem(
                     onClick = {
                         menuExpanded = false
                         onVideoClick(video)
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.playlist_add_to)) },
+                    onClick = {
+                        menuExpanded = false
+                        onAddToPlaylistClick(video)
                     }
                 )
             }

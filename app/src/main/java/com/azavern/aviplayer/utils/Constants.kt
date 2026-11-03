@@ -8,6 +8,8 @@ object Constants {
 
     // ---- Intent extras untuk PlayerActivity (Blueprint Bagian 6) ----
     const val KEY_VIDEO_PATH = "extra_video_path"
+    const val KEY_QUEUE_PATHS = "extra_queue_paths"
+    const val KEY_QUEUE_TITLES = "extra_queue_titles"
     const val KEY_VIDEO_ID = "extra_video_id"
     const val KEY_VIDEO_TITLE = "extra_video_title"
 

@@ -47,10 +47,10 @@ data class PlayerControlActions(
  * [prominent] hanya untuk PLAY_PAUSE di klaster tengah: tombol besar
  * 64dp dengan ikon 44dp. Di slot lain, putar/jeda berukuran normal.
  *
- * NEXT dirender nonaktif: belum ada antrean putar (playlist/folder
- * menyusul), jadi tombolnya memang belum bisa dipakai — bukan
- * tombol mati yang disembunyikan. LOCK, SCREEN_RATIO, dan EMPTY
- * tidak dirender (fitur belum ada / slot kosong).
+ * NEXT aktif hanya bila antrean konteks masih punya video
+ * berikutnya (uiState.hasNext, Milestone 10); di ujung antrean ia
+ * kembali redup dan nonaktif. LOCK, SCREEN_RATIO, dan EMPTY tidak
+ * dirender (fitur belum ada / slot kosong).
  */
 @Composable
 fun ControlSlotButton(
@@ -86,13 +86,13 @@ fun ControlSlotButton(
 
         ControlSlot.NEXT -> IconButton(
             onClick = actions.onNext,
-            enabled = false,
+            enabled = uiState.hasNext,
             modifier = modifier
         ) {
             Icon(
                 imageVector = Icons.Rounded.SkipNext,
                 contentDescription = stringResource(R.string.player_action_next),
-                tint = Color.White.copy(alpha = 0.4f),
+                tint = if (uiState.hasNext) Color.White else Color.White.copy(alpha = 0.4f),
                 modifier = Modifier.size(32.dp)
             )
         }

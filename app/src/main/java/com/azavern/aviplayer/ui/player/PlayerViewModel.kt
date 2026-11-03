@@ -76,8 +76,32 @@ class PlayerViewModel @Inject constructor(
     private var positionTicker: Job? = null
     private var initializedPath: String? = null
 
-    fun initPlayer(path: String, id: String, title: String) {
+    /** Antrean konteks putar (Milestone 10): kelompok video asal buka. */
+    private data class QueueItem(val path: String, val title: String)
+
+    private var queue: List<QueueItem> = emptyList()
+    private var queueIndex: Int = 0
+
+    fun initPlayer(
+        path: String,
+        id: String,
+        title: String,
+        queuePaths: List<String> = emptyList(),
+        queueTitles: List<String> = emptyList()
+    ) {
         loadPlayerUiConfig()
+        // Bangun antrean dari konteks asal (daftar Beranda / isi folder /
+        // entri playlist — semantik dari Veo 2026-11-04). Tanpa antrean
+        // dari pengirim, antrean = video ini saja.
+        queue = if (queuePaths.isNotEmpty()) {
+            queuePaths.mapIndexed { index, queuePath ->
+                QueueItem(queuePath, queueTitles.getOrElse(index) { "" })
+            }
+        } else {
+            listOf(QueueItem(path, title))
+        }
+        queueIndex = queue.indexOfFirst { it.path == path }
+            .takeIf { it >= 0 } ?: 0
         if (path.isBlank()) {
             _uiState.update {
                 it.copy(playerState = PlayerState.Error("Path video tidak diberikan"))
@@ -96,7 +120,9 @@ class PlayerViewModel @Inject constructor(
                 videoTitle = title,
                 playerState = PlayerState.Loading,
                 currentPositionMs = 0L,
-                durationMs = 0L
+                durationMs = 0L,
+                hasNext = queueIndex < queue.lastIndex,
+                hasPrevious = queueIndex > 0
             )
         }
         playerManager.setEventListener(PlayerEventListener { event -> onPlayerEvent(event) })
@@ -140,10 +166,64 @@ class PlayerViewModel @Inject constructor(
         _uiState.update { it.copy(currentPositionMs = positionMs.coerceAtLeast(0L)) }
     }
 
-    /** Tombol PREVIOUS (Milestone 1): mulai ulang video dari awal. */
+    /**
+     * Tombol PREVIOUS (Milestone 10): pindah ke video sebelumnya di
+     * antrean konteks. Di awal antrean, PREVIOUS mengulang video dari
+     * awal (perilaku lamanya sejak Milestone 1).
+     */
     fun onPrevious() {
-        seekTo(0L)
-        play()
+        if (queueIndex > 0) {
+            playQueueItem(queueIndex - 1)
+        } else {
+            seekTo(0L)
+            play()
+        }
+    }
+
+    /** Tombol NEXT (Milestone 10): pindah ke video berikutnya di antrean. */
+    fun onNext() {
+        if (queueIndex < queue.lastIndex) playQueueItem(queueIndex + 1)
+    }
+
+    /**
+     * Pindah ke item antrean pada [index]: posisi video yang
+     * ditinggalkan disimpan dulu, lalu video tujuan disiapkan dari
+     * posisi terakhirnya (resume Milestone 2 berlaku per video).
+     */
+    private fun playQueueItem(index: Int) {
+        val item = queue.getOrNull(index) ?: return
+        val leaving = _uiState.value
+        if (leaving.videoId.isNotBlank() && leaving.videoPath.isNotBlank()) {
+            val leavingPosition = playerManager.getCurrentPosition()
+            val leavingId = leaving.videoId
+            val leavingPath = leaving.videoPath
+            viewModelScope.launch(NonCancellable) {
+                playbackRepository.savePosition(leavingId, leavingPath, leavingPosition)
+            }
+        }
+        queueIndex = index
+        initializedPath = item.path
+        val newId = FileUtils.generateVideoId(item.path)
+        _uiState.update {
+            it.copy(
+                videoPath = item.path,
+                videoId = newId,
+                videoTitle = item.title,
+                playerState = PlayerState.Loading,
+                currentPositionMs = 0L,
+                durationMs = 0L,
+                hasNext = index < queue.lastIndex,
+                hasPrevious = index > 0,
+                seekPreviewMs = null,
+                captureResult = null
+            )
+        }
+        viewModelScope.launch {
+            val lastPosition = playbackRepository.getLastPosition(newId)
+            _uiState.update { it.copy(currentPositionMs = lastPosition) }
+            playerManager.prepare(item.path, startPositionMs = lastPosition)
+            playerManager.setSpeed(_uiState.value.playbackSpeed)
+        }
     }
 
     // ---- Gesture (Milestone 5) ----
@@ -325,6 +405,10 @@ class PlayerViewModel @Inject constructor(
                         durationMs = normalizedDuration()
                     )
                 }
+                // Video habis → lanjut otomatis ke video berikutnya di
+                // antrean (DoD Milestone 10); onNext berhenti sendiri
+                // bila sudah di ujung antrean.
+                if (event.playbackState == Player.STATE_ENDED) onNext()
             }
             is PlayerEvent.IsPlayingChanged -> {
                 _uiState.update {

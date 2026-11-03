@@ -45,6 +45,7 @@ fun PlayerScreen(
     uiState: PlayerUiState,
     player: ExoPlayer,
     onPreviousClick: () -> Unit,
+    onNextClick: () -> Unit,
     onPlayPauseClick: () -> Unit,
     onSeekTo: (Long) -> Unit,
     onRotateClick: () -> Unit,
@@ -74,7 +75,7 @@ fun PlayerScreen(
     val controlActions = PlayerControlActions(
         onPlayPause = onPlayPauseClick,
         onPrevious = onPreviousClick,
-        onNext = {},
+        onNext = onNextClick,
         onRotate = onRotateClick,
         onCapture = onCaptureClick,
         onSpeed = onSpeedClick

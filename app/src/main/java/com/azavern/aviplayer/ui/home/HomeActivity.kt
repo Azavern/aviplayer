@@ -55,7 +55,7 @@ class HomeActivity : ComponentActivity() {
             AppTheme(themeConfig = uiState.themeConfig) {
                 HomeScreen(
                     viewModel = viewModel,
-                    onNavigateToPlayer = { path, id, title -> openPlayer(path, id, title) },
+                    onNavigateToPlayer = { navigation -> openPlayer(navigation) },
                     onRequestPermission = { permissionLauncher.launch(readPermission) },
                     onNavigateToCustomization = { openCustomization() }
                 )
@@ -85,12 +85,18 @@ class HomeActivity : ComponentActivity() {
         ContextCompat.checkSelfPermission(this, readPermission) ==
             PackageManager.PERMISSION_GRANTED
 
-    private fun openPlayer(path: String, id: String, title: String) {
+    private fun openPlayer(navigation: HomeNavigation.ToPlayer) {
         startActivity(
             Intent(this, PlayerActivity::class.java)
-                .putExtra(Constants.KEY_VIDEO_PATH, path)
-                .putExtra(Constants.KEY_VIDEO_ID, id)
-                .putExtra(Constants.KEY_VIDEO_TITLE, title)
+                .putExtra(Constants.KEY_VIDEO_PATH, navigation.path)
+                .putExtra(Constants.KEY_VIDEO_ID, navigation.id)
+                .putExtra(Constants.KEY_VIDEO_TITLE, navigation.title)
+                .putStringArrayListExtra(
+                    Constants.KEY_QUEUE_PATHS, ArrayList(navigation.queuePaths)
+                )
+                .putStringArrayListExtra(
+                    Constants.KEY_QUEUE_TITLES, ArrayList(navigation.queueTitles)
+                )
         )
     }
 }

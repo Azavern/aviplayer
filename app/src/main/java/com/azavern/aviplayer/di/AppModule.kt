@@ -9,8 +9,11 @@ import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import com.azavern.aviplayer.data.db.AppDatabase
 import com.azavern.aviplayer.data.db.dao.PlaybackStateDao
+import com.azavern.aviplayer.data.db.dao.PlaylistDao
+import com.azavern.aviplayer.data.db.dao.PlaylistEntryDao
 import com.azavern.aviplayer.data.repository.FolderRepository
 import com.azavern.aviplayer.data.repository.PlaybackRepository
+import com.azavern.aviplayer.data.repository.PlaylistRepository
 import com.azavern.aviplayer.data.repository.SettingsRepository
 import com.azavern.aviplayer.data.repository.VideoRepository
 import com.azavern.aviplayer.data.source.FileScannerDataSource
@@ -65,6 +68,22 @@ object AppModule {
     @Provides
     fun providePlaybackStateDao(database: AppDatabase): PlaybackStateDao =
         database.playbackStateDao()
+
+    @Provides
+    fun providePlaylistDao(database: AppDatabase): PlaylistDao =
+        database.playlistDao()
+
+    @Provides
+    fun providePlaylistEntryDao(database: AppDatabase): PlaylistEntryDao =
+        database.playlistEntryDao()
+
+    @Provides
+    @Singleton
+    fun providePlaylistRepository(
+        playlistDao: PlaylistDao,
+        playlistEntryDao: PlaylistEntryDao,
+        fileScanner: FileScannerDataSource
+    ): PlaylistRepository = PlaylistRepository(playlistDao, playlistEntryDao, fileScanner)
 
     @Provides
     @Singleton

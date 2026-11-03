@@ -1,6 +1,7 @@
 package com.azavern.aviplayer.ui.home
 
 import com.azavern.aviplayer.data.model.FolderItem
+import com.azavern.aviplayer.data.model.PlaylistEntry
 import com.azavern.aviplayer.data.model.PlaylistInfo
 import com.azavern.aviplayer.data.model.ThemeConfig
 import com.azavern.aviplayer.data.model.VideoItem
@@ -29,15 +30,29 @@ data class HomeUiState(
     val lastPlayedPath: String? = null,
     val lastPlayedTitle: String? = null,
     /** Bar mini video terakhir (di atas navigasi bawah) ditutup pengguna. */
-    val miniBarDismissed: Boolean = false
+    val miniBarDismissed: Boolean = false,
+    /** Playlist yang sedang dibuka detailnya di tab Playlist (Milestone 10). */
+    val openPlaylistId: Long? = null,
+    /** Entri playlist yang sedang dibuka, sesuai urutan tampil. */
+    val playlistEntries: List<PlaylistEntry> = emptyList(),
+    /** Video yang menunggu dipilihkan playlist (dialog pemilih). */
+    val pendingPlaylistVideo: VideoItem? = null
 )
 
 enum class HomeTab { VIDEO, FOLDER, PLAYLIST }
 
 sealed class HomeNavigation {
+    /**
+     * Menuju player. [queuePaths]/[queueTitles] adalah antrean konteks
+     * putar (Milestone 10, semantik Veo): daftar yang sedang tampil
+     * saat video dibuka — isi folder, daftar Beranda, atau entri
+     * playlist — supaya prev/next player mengikuti kelompoknya.
+     */
     data class ToPlayer(
         val path: String,
         val id: String,
-        val title: String
+        val title: String,
+        val queuePaths: List<String> = emptyList(),
+        val queueTitles: List<String> = emptyList()
     ) : HomeNavigation()
 }

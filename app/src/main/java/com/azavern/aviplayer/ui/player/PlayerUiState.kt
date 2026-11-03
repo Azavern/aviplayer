@@ -50,6 +50,10 @@ data class PlayerUiState(
     val volumeLevel: Float = 1f,
     /** Posisi pratinjau saat gesture seek aktif; null = tidak ada pratinjau. */
     val seekPreviewMs: Long? = null,
+    /** Masih ada video berikutnya di antrean konteks putar (Milestone 10). */
+    val hasNext: Boolean = false,
+    /** Masih ada video sebelumnya di antrean konteks putar (Milestone 10). */
+    val hasPrevious: Boolean = false,
     /** Hasil capture frame terakhir; null = belum ada / sudah ditampilkan. */
     val captureResult: CaptureResult? = null,
     /** Konfigurasi tampilan player dari SettingsRepository (Milestone 7). */

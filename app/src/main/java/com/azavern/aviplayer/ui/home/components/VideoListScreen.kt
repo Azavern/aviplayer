@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -40,6 +41,8 @@ fun VideoListScreen(
     lastPlayedVideoId: String?,
     onVideoClick: (VideoItem) -> Unit,
     onCloseFolder: () -> Unit,
+    onAddToPlaylistClick: (VideoItem) -> Unit,
+    listState: LazyListState,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxSize()) {
@@ -103,7 +106,7 @@ fun VideoListScreen(
                 }
             }
             else -> {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
                     items(items = videos, key = { it.id }) { video ->
                         val position = playbackPositions[video.id]
                         val progress = if (
@@ -118,7 +121,8 @@ fun VideoListScreen(
                             video = video,
                             progressFraction = progress,
                             isLastPlayed = video.id == lastPlayedVideoId,
-                            onVideoClick = onVideoClick
+                            onVideoClick = onVideoClick,
+                            onAddToPlaylistClick = onAddToPlaylistClick
                         )
                     }
                 }

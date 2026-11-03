@@ -50,6 +50,15 @@ class FileScannerDataSource @Inject constructor(
         ).filter { it.folderPath == normalized }
     }
 
+    /** Satu video berdasarkan path persis; null bila tidak ada / tanpa izin. */
+    fun getVideoByPath(path: String): VideoItem? {
+        if (!hasReadPermission()) return null
+        return queryVideos(
+            selection = "${MediaStore.Video.Media.DATA} = ?",
+            selectionArgs = arrayOf(path)
+        ).firstOrNull()
+    }
+
     /**
      * Semua folder yang berisi video: dikelompokkan dari satu query
      * video (BUCKET_DISPLAY_NAME untuk nama, path induk untuk kunci).
