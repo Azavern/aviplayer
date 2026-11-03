@@ -15,6 +15,7 @@ import com.azavern.aviplayer.data.repository.SettingsRepository
 import com.azavern.aviplayer.data.repository.VideoRepository
 import com.azavern.aviplayer.data.source.FileScannerDataSource
 import com.azavern.aviplayer.data.source.PreferenceDataSource
+import com.azavern.aviplayer.player.capture.VideoFrameCapturer
 import com.azavern.aviplayer.utils.Constants
 import dagger.Module
 import dagger.Provides
@@ -91,4 +92,10 @@ object AppModule {
     fun provideSettingsRepository(
         preferenceDataSource: PreferenceDataSource
     ): SettingsRepository = SettingsRepository(preferenceDataSource)
+
+    @Provides
+    @Singleton
+    fun provideVideoFrameCapturer(
+        @ApplicationContext context: Context
+    ): VideoFrameCapturer = VideoFrameCapturer(context)
 }

@@ -6,16 +6,27 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.media3.exoplayer.ExoPlayer
+import com.azavern.aviplayer.R
 import com.azavern.aviplayer.player.core.PlayerState
+import com.azavern.aviplayer.ui.player.CaptureResult
 import com.azavern.aviplayer.ui.player.PlayerUiState
 
 /**
@@ -42,8 +53,27 @@ fun PlayerScreen(
     onSeekClear: () -> Unit,
     onGestureSeekForward: () -> Unit,
     onGestureSeekBackward: () -> Unit,
+    onCaptureClick: () -> Unit,
+    onCaptureResultConsumed: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val captureSuccessText = stringResource(R.string.player_capture_success)
+    val captureFailedText = stringResource(R.string.player_capture_failed)
+
+    // Snackbar hasil capture (Milestone 6): tampil sekali per hasil,
+    // lalu state dibersihkan lewat onCaptureResultConsumed.
+    LaunchedEffect(uiState.captureResult) {
+        when (val result = uiState.captureResult) {
+            is CaptureResult.Success -> snackbarHostState.showSnackbar(captureSuccessText)
+            is CaptureResult.Error -> snackbarHostState.showSnackbar(
+                "$captureFailedText: ${result.message}"
+            )
+            null -> Unit
+        }
+        if (uiState.captureResult != null) onCaptureResultConsumed()
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -88,6 +118,28 @@ fun PlayerScreen(
             title = uiState.videoTitle,
             onBackClick = onBackClick,
             modifier = Modifier.align(Alignment.TopCenter)
+        )
+
+        // Tombol capture frame (Milestone 6) — posisi tepi kiri tengah
+        // persis referensi Veo; datar tanpa latar seperti tombol lain.
+        IconButton(
+            onClick = onCaptureClick,
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .padding(start = 4.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.PhotoCamera,
+                contentDescription = stringResource(R.string.player_action_capture),
+                tint = Color.White
+            )
+        }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 24.dp, vertical = 118.dp)
         )
 
         Column(

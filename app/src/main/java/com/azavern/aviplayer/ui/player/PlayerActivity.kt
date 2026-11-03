@@ -67,12 +67,15 @@ class PlayerActivity : ComponentActivity() {
                     }
                 }
 
-                // Gesture Milestone 5: level di state diterapkan ke
-                // window (kecerahan) dan AudioManager (volume) di sini —
-                // ViewModel sendiri tidak menyentuh sistem.
-                LaunchedEffect(uiState.brightnessLevel) {
+                // Gesture Milestone 5: volume di state diterapkan ke
+                // AudioManager di sini; ViewModel tidak menyentuh sistem.
+                // Kecerahan HANYA diterapkan bila pengguna mengubahnya
+                // lewat gesture (brightnessOverrideActive) — penerapan
+                // otomatis saat mulai diputar dihapus atas perintah Veo
+                // 2026-11-04 karena membuat kecerahan melonjak sendiri.
+                LaunchedEffect(uiState.brightnessLevel, uiState.brightnessOverrideActive) {
                     val level = uiState.brightnessLevel
-                    if (level >= 0f) {
+                    if (uiState.brightnessOverrideActive && level >= 0f) {
                         val attrs = window.attributes
                         if (attrs.screenBrightness != level) {
                             attrs.screenBrightness = level
@@ -103,7 +106,9 @@ class PlayerActivity : ComponentActivity() {
                     onSeekCommit = viewModel::commitSeekPreview,
                     onSeekClear = viewModel::clearSeekPreview,
                     onGestureSeekForward = viewModel::seekForward,
-                    onGestureSeekBackward = viewModel::seekBackward
+                    onGestureSeekBackward = viewModel::seekBackward,
+                    onCaptureClick = viewModel::captureFrame,
+                    onCaptureResultConsumed = viewModel::onCaptureResultConsumed
                 )
             }
         }

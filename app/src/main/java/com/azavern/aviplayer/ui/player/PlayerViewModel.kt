@@ -10,6 +10,7 @@ import com.azavern.aviplayer.data.repository.SettingsRepository
 import com.azavern.aviplayer.player.core.PlayerEvent
 import com.azavern.aviplayer.player.core.PlayerEventListener
 import com.azavern.aviplayer.player.core.PlayerState
+import com.azavern.aviplayer.player.capture.VideoFrameCapturer
 import com.azavern.aviplayer.player.core.VideoPlayerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import com.azavern.aviplayer.utils.Constants
@@ -40,7 +41,8 @@ import javax.inject.Inject
 class PlayerViewModel @Inject constructor(
     private val playerManager: VideoPlayerManager,
     private val playbackRepository: PlaybackRepository,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val frameCapturer: VideoFrameCapturer
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PlayerUiState())
@@ -145,9 +147,18 @@ class PlayerViewModel @Inject constructor(
         seekTo(_uiState.value.currentPositionMs - Constants.DEFAULT_SEEK_STEP_MS)
     }
 
-    /** Terapkan level kecerahan baru (diteruskan PlayerActivity ke window). */
+    /**
+     * Terapkan level kecerahan baru dari gesture (diteruskan
+     * PlayerActivity ke window). Ini SATU-SATUNYA jalan kecerahan
+     * window diubah aplikasi — tidak ada penerapan otomatis.
+     */
     fun adjustBrightness(level: Float) {
-        _uiState.update { it.copy(brightnessLevel = level.coerceIn(0f, 1f)) }
+        _uiState.update {
+            it.copy(
+                brightnessLevel = level.coerceIn(0f, 1f),
+                brightnessOverrideActive = true
+            )
+        }
     }
 
     /** Terapkan level volume baru (diteruskan PlayerActivity ke AudioManager). */

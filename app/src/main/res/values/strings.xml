@@ -11,6 +11,9 @@
     <string name="player_action_previous">Sebelumnya (mulai ulang)</string>
     <string name="player_action_next">Berikutnya</string>
     <string name="player_action_rotate">Ganti mode orientasi</string>
+    <string name="player_action_capture">Tangkap frame</string>
+    <string name="player_capture_success">Frame tersimpan ke galeri (Pictures/AVP)</string>
+    <string name="player_capture_failed">Gagal menangkap frame</string>
     <string name="player_action_back">Kembali</string>
     <string name="milestone_marker">Milestone 4</string>
 
