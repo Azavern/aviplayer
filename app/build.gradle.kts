@@ -75,6 +75,7 @@ dependencies {
     // Storage (Room 3 + DataStore)
     implementation(libs.androidx.room3.runtime)
     ksp(libs.androidx.room3.compiler)
+    implementation(libs.androidx.sqlite.framework)
     implementation(libs.androidx.datastore.preferences)
 
     // Lifecycle & Async

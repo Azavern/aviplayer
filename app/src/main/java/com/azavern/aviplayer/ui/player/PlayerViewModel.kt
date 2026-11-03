@@ -5,12 +5,15 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.C
 import androidx.media3.common.Player
 import com.azavern.aviplayer.data.model.OrientationMode
+import com.azavern.aviplayer.data.repository.PlaybackRepository
 import com.azavern.aviplayer.player.core.PlayerEvent
 import com.azavern.aviplayer.player.core.PlayerEventListener
 import com.azavern.aviplayer.player.core.PlayerState
 import com.azavern.aviplayer.player.core.VideoPlayerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import com.azavern.aviplayer.utils.FileUtils
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,15 +27,17 @@ import javax.inject.Inject
  * ViewModel Player (Blueprint Milestone 1 & Bagian 10A/10F).
  * Satu-satunya penghubung UI dengan [VideoPlayerManager].
  *
- * Siklus hidup: [initPlayer] menyiapkan video; [onStop] (dari
- * PlayerActivity.onStop) menyimpan posisi terakhir di state lalu
- * me-release player — penyimpanan persisten ke database adalah
- * Milestone 2. [onStart] menyiapkan ulang dari posisi terakhir bila
- * player sudah ter-release (mis. kembali dari Home ke Activity yang sama).
+ * Siklus hidup: [initPlayer] menyiapkan video dari posisi terakhir
+ * yang tersimpan di database (Milestone 2, lewat [PlaybackRepository]);
+ * [onStop] (dari PlayerActivity.onStop) menyimpan posisi ke database
+ * lalu me-release player. [onStart] menyiapkan ulang dari posisi di
+ * state bila player sudah ter-release (mis. kembali dari Home ke
+ * Activity yang sama, tanpa proses mati).
  */
 @HiltViewModel
 class PlayerViewModel @Inject constructor(
-    private val playerManager: VideoPlayerManager
+    private val playerManager: VideoPlayerManager,
+    private val playbackRepository: PlaybackRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PlayerUiState())
@@ -53,10 +58,13 @@ class PlayerViewModel @Inject constructor(
         }
         if (initializedPath == path && !playerManager.isReleased) return
         initializedPath = path
+        // ID kosong (mis. dibuka lewat intent manual) → turunkan dari path,
+        // supaya resume tetap bekerja dengan kunci yang sama seperti Beranda.
+        val effectiveId = id.ifBlank { FileUtils.generateVideoId(path) }
         _uiState.update {
             it.copy(
                 videoPath = path,
-                videoId = id,
+                videoId = effectiveId,
                 videoTitle = title,
                 playerState = PlayerState.Loading,
                 currentPositionMs = 0L,
@@ -64,8 +72,12 @@ class PlayerViewModel @Inject constructor(
             )
         }
         playerManager.setEventListener(PlayerEventListener { event -> onPlayerEvent(event) })
-        playerManager.prepare(path, startPositionMs = 0L)
-        startPositionTicker()
+        viewModelScope.launch {
+            val lastPosition = playbackRepository.getLastPosition(effectiveId)
+            _uiState.update { it.copy(currentPositionMs = lastPosition) }
+            playerManager.prepare(path, startPositionMs = lastPosition)
+            startPositionTicker()
+        }
     }
 
     /** Dipanggil PlayerActivity.onStart: siapkan ulang bila player ter-release di onStop. */
@@ -125,10 +137,22 @@ class PlayerViewModel @Inject constructor(
 
     /**
      * Dipanggil PlayerActivity.onStop() (Blueprint Bagian 10A):
-     * catat posisi terakhir, hentikan ticker, release player.
+     * catat posisi terakhir, simpan ke database (Milestone 2),
+     * hentikan ticker, release player.
+     *
+     * Penyimpanan dibungkus [NonCancellable]: onStop bisa diikuti
+     * penghancuran ViewModel, dan posisi tidak boleh hilang hanya
+     * karena scope dibatalkan.
      */
     fun onStop() {
-        _uiState.update { it.copy(currentPositionMs = playerManager.getCurrentPosition()) }
+        val position = playerManager.getCurrentPosition()
+        val state = _uiState.value
+        _uiState.update { it.copy(currentPositionMs = position) }
+        if (state.videoId.isNotBlank() && state.videoPath.isNotBlank()) {
+            viewModelScope.launch(NonCancellable) {
+                playbackRepository.savePosition(state.videoId, state.videoPath, position)
+            }
+        }
         positionTicker?.cancel()
         positionTicker = null
         playerManager.release()
