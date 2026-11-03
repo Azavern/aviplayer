@@ -63,7 +63,9 @@ class PlayerActivity : ComponentActivity() {
                     onPreviousClick = viewModel::onPrevious,
                     onPlayPauseClick = viewModel::togglePlayPause,
                     onSeekTo = viewModel::seekTo,
-                    onRotateClick = viewModel::cycleOrientationMode
+                    onRotateClick = viewModel::cycleOrientationMode,
+                    onBackClick = { finish() },
+                    onSpeedClick = viewModel::cycleSpeed
                 )
             }
         }

@@ -1,39 +1,82 @@
 package com.azavern.aviplayer.ui.player.components
 
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.BatteryManager
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.ScreenRotation
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.azavern.aviplayer.R
+import com.azavern.aviplayer.data.model.OrientationMode
+import kotlinx.coroutines.delay
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
- * Judul video (Blueprint Milestone 1: statis, belum membaca TitleConfig).
- * Ukuran 14sp & warna putih mengikuti bawaan TitleConfig Bagian 8.
- * Chip penanda milestone di kanan adalah penanda versi build untuk
- * pengujian di perangkat (permintaan Veo setelah Milestone 0).
+ * Bar atas player — mengikuti referensi Veo (2026-11-04):
+ * panah kembali, judul satu baris, lalu di kanan tombol rotasi
+ * (Bagian 10F, beserta label mode kecil) dan indikator baterai + jam.
+ *
+ * Semua tombol DATAR: tanpa latar di balik ikon. Indikator baterai
+ * duduk di dalam bar dengan padding normal (di mockup referensi ia
+ * terlalu mepet ke pojok sampai nyaris terpotong — di sini dirapikan).
+ *
+ * Tombol-tombol referensi yang fiturnya belum ada (PiP, subtitle,
+ * volume, A-B, menu titik tiga) sengaja belum digambar; mereka datang
+ * bersama milestone fiturnya masing-masing.
  */
 @Composable
 fun TitleDisplay(
     title: String,
+    orientationMode: OrientationMode,
+    onBackClick: () -> Unit,
+    onRotateClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 4.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        IconButton(onClick = onBackClick) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                contentDescription = stringResource(R.string.player_action_back),
+                tint = Color.White
+            )
+        }
         Text(
             text = title,
             color = Color.White,
@@ -42,11 +85,103 @@ fun TitleDisplay(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f)
         )
-        Spacer(modifier = Modifier.width(8.dp))
+        IconButton(onClick = onRotateClick) {
+            Icon(
+                imageVector = Icons.Rounded.ScreenRotation,
+                contentDescription = stringResource(R.string.player_action_rotate),
+                tint = Color.White
+            )
+        }
         Text(
-            text = stringResource(R.string.milestone_marker),
-            color = MaterialTheme.colorScheme.primary,
-            style = MaterialTheme.typography.labelSmall
+            text = stringResource(
+                when (orientationMode) {
+                    OrientationMode.AUTO -> R.string.player_mode_auto
+                    OrientationMode.LANDSCAPE -> R.string.player_mode_landscape
+                    OrientationMode.PORTRAIT -> R.string.player_mode_portrait
+                }
+            ),
+            color = Color.White.copy(alpha = 0.75f),
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier.padding(end = 8.dp)
+        )
+        SystemStatusIndicator()
+    }
+}
+
+/**
+ * Baterai + jam dinding untuk bar atas player. Murni tampilan:
+ * dibaca ulang tiap 20 detik dari sticky intent baterai dan jam
+ * sistem; tidak menyentuh state player.
+ */
+@Composable
+private fun SystemStatusIndicator(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    var batteryPercent by remember { mutableIntStateOf(-1) }
+    var timeLabel by remember { mutableStateOf("") }
+
+    LaunchedEffect(Unit) {
+        val format = SimpleDateFormat("HH:mm", Locale.getDefault())
+        while (true) {
+            val batteryIntent = context.registerReceiver(
+                null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+            )
+            val level = batteryIntent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
+            val scale = batteryIntent?.getIntExtra(BatteryManager.EXTRA_SCALE, 100) ?: 100
+            batteryPercent = if (level >= 0 && scale > 0) level * 100 / scale else -1
+            timeLabel = format.format(Date())
+            delay(20_000)
+        }
+    }
+
+    Row(
+        modifier = modifier.padding(end = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (batteryPercent >= 0) {
+            BatteryGlyph(percent = batteryPercent)
+            Text(
+                text = "$batteryPercent%",
+                color = Color.White,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.padding(start = 4.dp, end = 8.dp)
+            )
+        }
+        Text(
+            text = timeLabel,
+            color = Color.White,
+            style = MaterialTheme.typography.labelMedium
+        )
+    }
+}
+
+/** Baterai horizontal kecil: garis tepi + isi sesuai persen + ujung knob. */
+@Composable
+private fun BatteryGlyph(percent: Int) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier
+                .width(22.dp)
+                .height(11.dp)
+                .clip(RoundedCornerShape(3.dp))
+                .border(1.dp, Color.White.copy(alpha = 0.7f), RoundedCornerShape(3.dp))
+                .padding(1.5.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth(percent.coerceIn(0, 100) / 100f)
+                    .clip(RoundedCornerShape(1.5.dp))
+                    .background(Color.White)
+            )
+        }
+        Box(
+            modifier = Modifier
+                .width(1.5.dp)
+                .height(4.dp)
+                .background(
+                    Color.White.copy(alpha = 0.7f),
+                    RoundedCornerShape(topEnd = 2.dp, bottomEnd = 2.dp)
+                )
         )
     }
 }

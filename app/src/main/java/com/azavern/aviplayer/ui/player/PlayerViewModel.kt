@@ -88,6 +88,7 @@ class PlayerViewModel @Inject constructor(
             val lastPosition = playbackRepository.getLastPosition(effectiveId)
             _uiState.update { it.copy(currentPositionMs = lastPosition) }
             playerManager.prepare(path, startPositionMs = lastPosition)
+            playerManager.setSpeed(_uiState.value.playbackSpeed)
             startPositionTicker()
         }
     }
@@ -98,6 +99,7 @@ class PlayerViewModel @Inject constructor(
         if (playerManager.isReleased && state.videoPath.isNotBlank()) {
             playerManager.setEventListener(PlayerEventListener { event -> onPlayerEvent(event) })
             playerManager.prepare(state.videoPath, startPositionMs = state.currentPositionMs)
+            playerManager.setSpeed(state.playbackSpeed)
             startPositionTicker()
         }
     }
@@ -126,6 +128,15 @@ class PlayerViewModel @Inject constructor(
     fun onPrevious() {
         seekTo(0L)
         play()
+    }
+
+    /** Tombol kecepatan: bersiklus 0.5 → 0.75 → 1.0 → 1.25 → 1.5 → 2.0 → 0.5. */
+    fun cycleSpeed() {
+        val speeds = listOf(0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f)
+        val currentIndex = speeds.indexOf(_uiState.value.playbackSpeed)
+        val next = speeds[(currentIndex + 1) % speeds.size]
+        playerManager.setSpeed(next)
+        _uiState.update { it.copy(playbackSpeed = next) }
     }
 
     /** Siklus mode orientasi AUTO → LANDSCAPE → PORTRAIT → AUTO (Bagian 10F). */

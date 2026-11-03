@@ -24,5 +24,7 @@ data class PlayerUiState(
     /** Status kunci rotasi HP (dibaca Activity dari Settings.System). */
     val systemAutoRotate: Boolean = true,
     /** Konfigurasi tema berjalan dari SettingsRepository (Milestone 4). */
-    val themeConfig: ThemeConfig = ThemeConfig.Default
+    val themeConfig: ThemeConfig = ThemeConfig.Default,
+    /** Kecepatan putar aktif (tombol "1.0×" di bar kontrol bawah). */
+    val playbackSpeed: Float = 1.0f
 )
