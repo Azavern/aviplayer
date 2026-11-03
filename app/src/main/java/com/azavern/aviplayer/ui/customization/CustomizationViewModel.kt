@@ -4,8 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.azavern.aviplayer.data.model.ControlLayoutConfig
 import com.azavern.aviplayer.data.model.ControlSlot
+import com.azavern.aviplayer.data.model.FolderVisibilityConfig
 import com.azavern.aviplayer.data.model.ThemeConfig
 import com.azavern.aviplayer.data.model.TitleConfig
+import com.azavern.aviplayer.data.repository.FolderRepository
 import com.azavern.aviplayer.data.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,7 +25,8 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class CustomizationViewModel @Inject constructor(
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val folderRepository: FolderRepository
 ) : ViewModel() {
 
     /** Alamat satu posisi slot di ControlLayoutConfig. */
@@ -51,6 +54,17 @@ class CustomizationViewModel @Inject constructor(
                 }
             }
         }
+        // Whitelist folder (Milestone 9): config + semua folder.
+        viewModelScope.launch {
+            settingsRepository.getFolderVisibilityConfig().collect { config ->
+                _uiState.update { it.copy(folderVisibilityConfig = config) }
+            }
+        }
+        viewModelScope.launch {
+            folderRepository.getAllFolders().collect { folders ->
+                _uiState.update { it.copy(allFolders = folders) }
+            }
+        }
     }
 
     fun onTabSelected(tab: CustomizationTab) {
@@ -64,6 +78,11 @@ class CustomizationViewModel @Inject constructor(
     /** Perubahan tema dari editor Tema (Milestone 8). */
     fun onThemeConfigChanged(config: ThemeConfig) {
         viewModelScope.launch { settingsRepository.updateThemeConfig(config) }
+    }
+
+    /** Perubahan whitelist folder dari editor Folder (Milestone 9). */
+    fun onFolderVisibilityChanged(config: FolderVisibilityConfig) {
+        viewModelScope.launch { settingsRepository.updateFolderVisibilityConfig(config) }
     }
 
     fun onControlLayoutChanged(config: ControlLayoutConfig) {

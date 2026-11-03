@@ -84,8 +84,10 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideFolderRepository(fileScanner: FileScannerDataSource): FolderRepository =
-        FolderRepository(fileScanner)
+    fun provideFolderRepository(
+        fileScanner: FileScannerDataSource,
+        settingsRepository: SettingsRepository
+    ): FolderRepository = FolderRepository(fileScanner, settingsRepository)
 
     @Provides
     @Singleton

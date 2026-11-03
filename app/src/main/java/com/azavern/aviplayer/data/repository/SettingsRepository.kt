@@ -1,6 +1,8 @@
 package com.azavern.aviplayer.data.repository
 
 import com.azavern.aviplayer.data.model.ControlLayoutConfig
+import com.azavern.aviplayer.data.model.FolderFilterMode
+import com.azavern.aviplayer.data.model.FolderVisibilityConfig
 import com.azavern.aviplayer.data.model.PlayerUiConfig
 import com.azavern.aviplayer.data.model.ThemeConfig
 import com.azavern.aviplayer.data.model.ThemeMode
@@ -9,6 +11,8 @@ import com.azavern.aviplayer.data.source.PreferenceDataSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
@@ -95,6 +99,35 @@ class SettingsRepository @Inject constructor(
 
     suspend fun resetControlLayoutToDefault() {
         updateControlLayoutConfig(ControlLayoutConfig.Default)
+    }
+
+    // ---- Visibilitas folder (Milestone 9) ----
+
+    /** Mode filter + daftar whitelist folder dari DataStore. */
+    fun getFolderVisibilityConfig(): Flow<FolderVisibilityConfig> = combine(
+        preferenceDataSource.getFolderFilterMode(),
+        preferenceDataSource.getWhitelistedPathsJson()
+    ) { modeName, pathsJson ->
+        FolderVisibilityConfig(
+            mode = runCatching { FolderFilterMode.valueOf(modeName) }
+                .getOrDefault(FolderFilterMode.ALL),
+            whitelistedPaths = if (pathsJson.isNullOrBlank()) {
+                emptySet()
+            } else {
+                runCatching {
+                    layoutJson.decodeFromString<List<String>>(pathsJson).toSet()
+                }.getOrDefault(emptySet())
+            }
+        )
+    }
+
+    suspend fun updateFolderVisibilityConfig(config: FolderVisibilityConfig) {
+        preferenceDataSource.setFolderFilterMode(config.mode.name)
+        preferenceDataSource.setWhitelistedPathsJson(
+            layoutJson.encodeToString(
+                ListSerializer(String.serializer()), config.whitelistedPaths.toList()
+            )
+        )
     }
 
     /** Semua konfigurasi tampilan player dalam satu Flow. */

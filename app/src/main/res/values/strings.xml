@@ -28,6 +28,11 @@
     <string name="theme_preview_background">Latar</string>
     <string name="theme_preview_surface">Permukaan</string>
     <string name="theme_preview_accent">Aksen</string>
+    <string name="customization_tab_whitelist">Folder</string>
+    <string name="whitelist_mode_label">Mode Whitelist Saja</string>
+    <string name="whitelist_info">Folder yang dicentang akan tampil di halaman Folder</string>
+    <string name="whitelist_empty">Tidak ada folder video yang ditemukan</string>
+    <string name="whitelist_video_count">%1$d video</string>
     <string name="title_editor_font_size">Ukuran font judul</string>
     <string name="title_editor_lines">Jumlah baris judul</string>
     <string name="title_editor_bold">Teks tebal</string>

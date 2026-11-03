@@ -99,6 +99,26 @@ class PreferenceDataSource @Inject constructor(
         dataStore.edit { it[KEY_TITLE_MARQUEE] = enabled }
     }
 
+    // ---- Visibilitas folder (Milestone 9) ----
+
+    /** Nama enum FolderFilterMode: "ALL" | "WHITELIST_ONLY". */
+    fun getFolderFilterMode(): Flow<String> = dataStore.data.map { prefs ->
+        prefs[KEY_FOLDER_FILTER_MODE] ?: "ALL"
+    }
+
+    suspend fun setFolderFilterMode(mode: String) {
+        dataStore.edit { it[KEY_FOLDER_FILTER_MODE] = mode }
+    }
+
+    /** JSON array berisi path folder whitelist; null = belum disimpan. */
+    fun getWhitelistedPathsJson(): Flow<String?> = dataStore.data.map { prefs ->
+        prefs[KEY_WHITELISTED_PATHS]
+    }
+
+    suspend fun setWhitelistedPathsJson(json: String) {
+        dataStore.edit { it[KEY_WHITELISTED_PATHS] = json }
+    }
+
     // ---- Layout kontrol player (Milestone 7) ----
 
     /** JSON ControlLayoutConfig; null = belum pernah disimpan. */

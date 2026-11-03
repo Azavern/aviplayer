@@ -24,8 +24,8 @@ import com.azavern.aviplayer.ui.customization.CustomizationTab
 import com.azavern.aviplayer.ui.customization.CustomizationViewModel
 
 /**
- * Root layar Kustomisasi (Milestone 7 + 8): TabRow tiga tab —
- * Judul, Tombol, dan Tema. Tab Whitelist menyusul milestone folder.
+ * Root layar Kustomisasi (Milestone 7 + 8 + 9): TabRow empat tab —
+ * Judul, Tombol, Tema, dan Folder (whitelist).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,6 +73,11 @@ fun CustomizationScreen(
                     onClick = { viewModel.onTabSelected(CustomizationTab.THEME) },
                     text = { Text(stringResource(R.string.customization_tab_theme)) }
                 )
+                Tab(
+                    selected = uiState.activeTab == CustomizationTab.WHITELIST,
+                    onClick = { viewModel.onTabSelected(CustomizationTab.WHITELIST) },
+                    text = { Text(stringResource(R.string.customization_tab_whitelist)) }
+                )
             }
             if (uiState.isLoading) {
                 CircularProgressIndicator()
@@ -91,6 +96,11 @@ fun CustomizationScreen(
                     CustomizationTab.THEME -> ThemeEditor(
                         themeConfig = uiState.themeConfig,
                         onThemeConfigChanged = viewModel::onThemeConfigChanged
+                    )
+                    CustomizationTab.WHITELIST -> WhitelistEditor(
+                        config = uiState.folderVisibilityConfig,
+                        allFolders = uiState.allFolders,
+                        onConfigChanged = viewModel::onFolderVisibilityChanged
                     )
                 }
             }
