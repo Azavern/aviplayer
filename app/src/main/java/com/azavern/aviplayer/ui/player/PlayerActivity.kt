@@ -14,7 +14,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.azavern.aviplayer.data.model.OrientationMode
-import com.azavern.aviplayer.data.model.ThemeConfig
 import com.azavern.aviplayer.ui.player.components.PlayerScreen
 import com.azavern.aviplayer.ui.theme.AppTheme
 import com.azavern.aviplayer.utils.Constants
@@ -47,9 +46,8 @@ class PlayerActivity : ComponentActivity() {
         viewModel.setSystemAutoRotate(readSystemAutoRotate())
 
         setContent {
-            AppTheme(themeConfig = ThemeConfig.Default) {
-                val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            AppTheme(themeConfig = uiState.themeConfig) {
                 // Orientasi adalah state runtime (Bagian 10F): terapkan setiap berubah.
                 LaunchedEffect(uiState.orientationMode) {
                     requestedOrientation = when (uiState.orientationMode) {

@@ -21,6 +21,12 @@ import javax.inject.Inject
  *
  * Tanpa izin baca media, semua fungsi mengembalikan list kosong
  * (bukan crash), sesuai spek.
+ *
+ * Filter ekstensi (pagar dari Veo, 2026-11-03): hanya file .mp4, .mkv,
+ * dan .mov yang dikembalikan. Ekstensi lain yang terdaftar di
+ * MediaStore sebagai video (mis. .ts dari folder unduhan bot) disaring
+ * di [queryVideos], sehingga tidak muncul di daftar video, daftar
+ * folder, isi folder, maupun pencarian.
  */
 class FileScannerDataSource @Inject constructor(
     @ApplicationContext private val context: Context
@@ -101,6 +107,8 @@ class FileScannerDataSource @Inject constructor(
             while (c.moveToNext()) {
                 val path = c.getString(dataIdx) ?: continue
                 val fileName = c.getString(nameIdx) ?: File(path).name
+                val extension = fileName.substringAfterLast('.', "").lowercase()
+                if (extension !in ALLOWED_EXTENSIONS) continue
                 val folderPath = File(path).parent ?: ""
                 results += VideoItem(
                     id = FileUtils.generateVideoId(path),
@@ -117,5 +125,10 @@ class FileScannerDataSource @Inject constructor(
             }
         }
         return results
+    }
+
+    companion object {
+        /** Satu-satunya ekstensi yang dirender aplikasi (pagar Veo 2026-11-03). */
+        private val ALLOWED_EXTENSIONS = setOf("mp4", "mkv", "mov")
     }
 }

@@ -1,6 +1,7 @@
 package com.azavern.aviplayer.ui.player
 
 import com.azavern.aviplayer.data.model.OrientationMode
+import com.azavern.aviplayer.data.model.ThemeConfig
 import com.azavern.aviplayer.player.core.PlayerState
 
 /**
@@ -21,5 +22,7 @@ data class PlayerUiState(
     /** Mode orientasi runtime (Bagian 10F), diterapkan Activity sebagai requestedOrientation. */
     val orientationMode: OrientationMode = OrientationMode.AUTO,
     /** Status kunci rotasi HP (dibaca Activity dari Settings.System). */
-    val systemAutoRotate: Boolean = true
+    val systemAutoRotate: Boolean = true,
+    /** Konfigurasi tema berjalan dari SettingsRepository (Milestone 4). */
+    val themeConfig: ThemeConfig = ThemeConfig.Default
 )

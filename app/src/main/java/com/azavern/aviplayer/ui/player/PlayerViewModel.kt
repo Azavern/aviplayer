@@ -6,6 +6,7 @@ import androidx.media3.common.C
 import androidx.media3.common.Player
 import com.azavern.aviplayer.data.model.OrientationMode
 import com.azavern.aviplayer.data.repository.PlaybackRepository
+import com.azavern.aviplayer.data.repository.SettingsRepository
 import com.azavern.aviplayer.player.core.PlayerEvent
 import com.azavern.aviplayer.player.core.PlayerEventListener
 import com.azavern.aviplayer.player.core.PlayerState
@@ -37,11 +38,22 @@ import javax.inject.Inject
 @HiltViewModel
 class PlayerViewModel @Inject constructor(
     private val playerManager: VideoPlayerManager,
-    private val playbackRepository: PlaybackRepository
+    private val playbackRepository: PlaybackRepository,
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PlayerUiState())
     val uiState: StateFlow<PlayerUiState> = _uiState.asStateFlow()
+
+    init {
+        // Tema mengikuti SettingsRepository (Milestone 4): PlayerActivity
+        // meneruskan themeConfig dari state ini ke AppTheme.
+        viewModelScope.launch {
+            settingsRepository.getThemeConfig().collect { config ->
+                _uiState.update { it.copy(themeConfig = config) }
+            }
+        }
+    }
 
     /** Diekspos ke VideoSurface lewat PlayerScreen (bukan untuk dimanipulasi UI). */
     val player get() = playerManager.player

@@ -464,6 +464,9 @@ app/src/main/java/com/[package]/avp/
 │   │   │       _ID, DISPLAY_NAME, DATA (full path), DURATION, SIZE,
 │   │   │       BUCKET_DISPLAY_NAME (nama folder), BUCKET_ID, DATE_ADDED
 │   │   │
+│   │   │     Filter ekstensi (pagar Veo 2026-11-03): hanya .mp4/.mkv/.mov
+│   │   │       yang dikembalikan; ekstensi lain (mis. .ts) disaring di
+│   │   │       queryVideos() sehingga tidak tampil di mana pun.
 │   │   │     fun scanAllVideos(): List<VideoItem>
 │   │   │       → query semua video, sort by DATE_ADDED DESC
 │   │   │

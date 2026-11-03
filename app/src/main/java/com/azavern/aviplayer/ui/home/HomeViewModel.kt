@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.azavern.aviplayer.data.model.FolderItem
 import com.azavern.aviplayer.data.model.VideoItem
 import com.azavern.aviplayer.data.repository.FolderRepository
+import com.azavern.aviplayer.data.repository.SettingsRepository
 import com.azavern.aviplayer.data.repository.VideoRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -26,13 +27,24 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val videoRepository: VideoRepository,
-    private val folderRepository: FolderRepository
+    private val folderRepository: FolderRepository,
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     private var videoLoadJob: Job? = null
+
+    init {
+        // Tema mengikuti SettingsRepository (Milestone 4): HomeActivity
+        // meneruskan themeConfig dari state ini ke AppTheme.
+        viewModelScope.launch {
+            settingsRepository.getThemeConfig().collect { config ->
+                _uiState.update { it.copy(themeConfig = config) }
+            }
+        }
+    }
 
     /** Hasil izin dari HomeActivity; saat diberikan, muat semua data. */
     fun onPermissionResult(granted: Boolean) {

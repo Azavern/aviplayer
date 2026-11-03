@@ -11,6 +11,7 @@ import com.azavern.aviplayer.data.db.AppDatabase
 import com.azavern.aviplayer.data.db.dao.PlaybackStateDao
 import com.azavern.aviplayer.data.repository.FolderRepository
 import com.azavern.aviplayer.data.repository.PlaybackRepository
+import com.azavern.aviplayer.data.repository.SettingsRepository
 import com.azavern.aviplayer.data.repository.VideoRepository
 import com.azavern.aviplayer.data.source.FileScannerDataSource
 import com.azavern.aviplayer.data.source.PreferenceDataSource
@@ -28,7 +29,7 @@ import javax.inject.Singleton
  * Milestone 2: DataStore, AppDatabase (Room 3 + AndroidSQLiteDriver),
  * PlaybackStateDao, PlaybackRepository.
  * Milestone 3: FileScannerDataSource, VideoRepository, FolderRepository.
- * SettingsRepository menyusul di Milestone 4.
+ * Milestone 4: SettingsRepository (tema).
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -84,4 +85,10 @@ object AppModule {
     @Singleton
     fun provideFolderRepository(fileScanner: FileScannerDataSource): FolderRepository =
         FolderRepository(fileScanner)
+
+    @Provides
+    @Singleton
+    fun provideSettingsRepository(
+        preferenceDataSource: PreferenceDataSource
+    ): SettingsRepository = SettingsRepository(preferenceDataSource)
 }

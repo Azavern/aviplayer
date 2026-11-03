@@ -3,11 +3,16 @@ package com.azavern.aviplayer.data.source
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.azavern.aviplayer.data.model.ThemeConfig
+import com.azavern.aviplayer.data.model.ThemeMode
 import com.azavern.aviplayer.utils.Constants
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 /**
@@ -15,14 +20,42 @@ import javax.inject.Inject
  * Semua akses baca/tulis DataStore hanya melalui file ini, dan setiap
  * key didefinisikan sebagai private val dari Constants.
  *
- * Milestone 2: hanya setup DataStore + definisi key. Pasangan
- * getter/setter Flow per key ditambahkan pada milestone pemiliknya
- * (tema di Milestone 4, sisanya di milestone Kustomisasi).
+ * Milestone 2: setup DataStore + definisi key.
+ * Milestone 4: pasangan getter/setter tema (mode, aksen, aksen sistem).
+ * Key sisanya ditambahkan pada milestone Kustomisasi.
  */
 class PreferenceDataSource @Inject constructor(
     /** Hanya untuk lapisan repository di paket data; UI/ViewModel tidak menyentuh ini. */
     val dataStore: DataStore<Preferences>
 ) {
+
+    // ---- Tema (Milestone 4) ----
+
+    /** Nama enum ThemeMode: "SYSTEM" | "LIGHT" | "DARK" | "AMOLED". */
+    fun getThemeMode(): Flow<String> = dataStore.data.map { prefs ->
+        prefs[KEY_THEME_MODE] ?: ThemeMode.SYSTEM.name
+    }
+
+    suspend fun setThemeMode(mode: String) {
+        dataStore.edit { it[KEY_THEME_MODE] = mode }
+    }
+
+    /** Warna aksen ARGB; bawaan lavender ThemeConfig.Default. */
+    fun getAccentColor(): Flow<Long> = dataStore.data.map { prefs ->
+        prefs[KEY_ACCENT_COLOR] ?: ThemeConfig.Default.accentColor
+    }
+
+    suspend fun setAccentColor(color: Long) {
+        dataStore.edit { it[KEY_ACCENT_COLOR] = color }
+    }
+
+    fun getUseSystemAccent(): Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[KEY_USE_SYSTEM_ACCENT] ?: false
+    }
+
+    suspend fun setUseSystemAccent(enabled: Boolean) {
+        dataStore.edit { it[KEY_USE_SYSTEM_ACCENT] = enabled }
+    }
 
     companion object {
         // String keys

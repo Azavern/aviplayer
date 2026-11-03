@@ -10,8 +10,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
-import com.azavern.aviplayer.data.model.ThemeConfig
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.azavern.aviplayer.ui.home.components.HomeScreen
 import com.azavern.aviplayer.ui.player.PlayerActivity
 import com.azavern.aviplayer.ui.theme.AppTheme
@@ -49,7 +50,8 @@ class HomeActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            AppTheme(themeConfig = ThemeConfig.Default) {
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            AppTheme(themeConfig = uiState.themeConfig) {
                 HomeScreen(
                     viewModel = viewModel,
                     onNavigateToPlayer = { path, id, title -> openPlayer(path, id, title) },
