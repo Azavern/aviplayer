@@ -46,10 +46,12 @@ fun SeekBarComponent(
     positionMs: Long,
     durationMs: Long,
     onSeekTo: (Long) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Posisi pratinjau gesture seek (Milestone 5); mengalahkan posisi asli saat tampil. */
+    previewPositionMs: Long? = null
 ) {
     var scrubbingValue by remember { mutableStateOf<Float?>(null) }
-    val displayPosition = scrubbingValue?.toLong() ?: positionMs
+    val displayPosition = scrubbingValue?.toLong() ?: previewPositionMs ?: positionMs
 
     Row(
         modifier = modifier.padding(horizontal = 16.dp),

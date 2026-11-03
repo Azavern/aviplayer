@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.ScreenRotation
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -37,7 +36,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.azavern.aviplayer.R
-import com.azavern.aviplayer.data.model.OrientationMode
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -45,12 +43,14 @@ import java.util.Locale
 
 /**
  * Bar atas player — mengikuti referensi Veo (2026-11-04):
- * panah kembali, judul satu baris, lalu di kanan tombol rotasi
- * (Bagian 10F, beserta label mode kecil) dan indikator baterai + jam.
+ * panah kembali, judul satu baris, lalu indikator baterai + jam
+ * di kanan.
  *
  * Semua tombol DATAR: tanpa latar di balik ikon. Indikator baterai
  * duduk di dalam bar dengan padding normal (di mockup referensi ia
  * terlalu mepet ke pojok sampai nyaris terpotong — di sini dirapikan).
+ * Tombol rotasi tinggal di pojok kanan bawah (PlayerControls),
+ * sesuai koreksi Veo 2026-11-04.
  *
  * Tombol-tombol referensi yang fiturnya belum ada (PiP, subtitle,
  * volume, A-B, menu titik tiga) sengaja belum digambar; mereka datang
@@ -59,9 +59,7 @@ import java.util.Locale
 @Composable
 fun TitleDisplay(
     title: String,
-    orientationMode: OrientationMode,
     onBackClick: () -> Unit,
-    onRotateClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -84,25 +82,6 @@ fun TitleDisplay(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f)
-        )
-        IconButton(onClick = onRotateClick) {
-            Icon(
-                imageVector = Icons.Rounded.ScreenRotation,
-                contentDescription = stringResource(R.string.player_action_rotate),
-                tint = Color.White
-            )
-        }
-        Text(
-            text = stringResource(
-                when (orientationMode) {
-                    OrientationMode.AUTO -> R.string.player_mode_auto
-                    OrientationMode.LANDSCAPE -> R.string.player_mode_landscape
-                    OrientationMode.PORTRAIT -> R.string.player_mode_portrait
-                }
-            ),
-            color = Color.White.copy(alpha = 0.75f),
-            style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier.padding(end = 8.dp)
         )
         SystemStatusIndicator()
     }

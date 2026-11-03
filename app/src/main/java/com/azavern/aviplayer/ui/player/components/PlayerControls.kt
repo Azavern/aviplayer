@@ -8,8 +8,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.ScreenRotation
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
+import androidx.compose.material.icons.rounded.StayCurrentLandscape
+import androidx.compose.material.icons.rounded.StayCurrentPortrait
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -22,16 +25,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.azavern.aviplayer.R
+import com.azavern.aviplayer.data.model.OrientationMode
 import java.util.Locale
 
 /**
  * Baris kontrol bawah player — mengikuti referensi Veo (2026-11-04):
- * klaster tengah sebelumnya / putar-jeda besar / berikutnya, teks
- * kecepatan di kanan, semua ikon DATAR tanpa latar.
+ * klaster tengah sebelumnya / putar-jeda besar / berikutnya, semua
+ * ikon DATAR tanpa latar. Di pojok kanan: teks kecepatan, lalu tombol
+ * rotasi (Bagian 10F) PALING pojok — koreksi Veo 2026-11-04.
+ *
+ * Tombol rotasi TANPA label teks (perintah Veo): mode dibedakan dari
+ * ikonnya — putar otomatis / ponsel landscape / ponsel portrait.
+ * Nama mode tetap jadi contentDescription untuk aksesibilitas.
  *
  * Yang belum digambar dari referensi (menunggu milestone fiturnya):
  * kunci di kiri (kunci kontrol), ikon tangkapan di kanan (Milestone 6).
- * Tombol rotasi kini tinggal di bar atas (TitleDisplay).
  *
  * Tombol NEXT tetap nonaktif: belum ada antrean (folder/playlist
  * datang di milestone Beranda & Playlist).
@@ -40,9 +48,11 @@ import java.util.Locale
 fun PlayerControls(
     isPlaying: Boolean,
     playbackSpeed: Float,
+    orientationMode: OrientationMode,
     onPreviousClick: () -> Unit,
     onPlayPauseClick: () -> Unit,
     onSpeedClick: () -> Unit,
+    onRotateClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -84,15 +94,34 @@ fun PlayerControls(
                 )
             }
         }
-        TextButton(
-            onClick = onSpeedClick,
-            modifier = Modifier.align(Alignment.CenterEnd)
+        Row(
+            modifier = Modifier.align(Alignment.CenterEnd),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = String.format(Locale.US, "%.1f×", playbackSpeed),
-                color = Color.White,
-                style = MaterialTheme.typography.titleSmall
-            )
+            TextButton(onClick = onSpeedClick) {
+                Text(
+                    text = String.format(Locale.US, "%.1f×", playbackSpeed),
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleSmall
+                )
+            }
+            IconButton(onClick = onRotateClick) {
+                Icon(
+                    imageVector = when (orientationMode) {
+                        OrientationMode.AUTO -> Icons.Rounded.ScreenRotation
+                        OrientationMode.LANDSCAPE -> Icons.Rounded.StayCurrentLandscape
+                        OrientationMode.PORTRAIT -> Icons.Rounded.StayCurrentPortrait
+                    },
+                    contentDescription = stringResource(
+                        when (orientationMode) {
+                            OrientationMode.AUTO -> R.string.player_mode_auto
+                            OrientationMode.LANDSCAPE -> R.string.player_mode_landscape
+                            OrientationMode.PORTRAIT -> R.string.player_mode_portrait
+                        }
+                    ),
+                    tint = Color.White
+                )
+            }
         }
     }
 }

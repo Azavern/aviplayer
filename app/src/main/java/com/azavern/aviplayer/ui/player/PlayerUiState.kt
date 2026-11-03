@@ -26,5 +26,11 @@ data class PlayerUiState(
     /** Konfigurasi tema berjalan dari SettingsRepository (Milestone 4). */
     val themeConfig: ThemeConfig = ThemeConfig.Default,
     /** Kecepatan putar aktif (tombol "1.0×" di bar kontrol bawah). */
-    val playbackSpeed: Float = 1.0f
+    val playbackSpeed: Float = 1.0f,
+    /** Level kecerahan jendela 0f..1f; -1f = ikuti sistem (Milestone 5). */
+    val brightnessLevel: Float = -1f,
+    /** Level volume media 0f..1f sebagai fraksi volume maksimum (Milestone 5). */
+    val volumeLevel: Float = 1f,
+    /** Posisi pratinjau saat gesture seek aktif; null = tidak ada pratinjau. */
+    val seekPreviewMs: Long? = null
 )

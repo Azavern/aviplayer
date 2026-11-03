@@ -12,6 +12,7 @@ import com.azavern.aviplayer.player.core.PlayerEventListener
 import com.azavern.aviplayer.player.core.PlayerState
 import com.azavern.aviplayer.player.core.VideoPlayerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import com.azavern.aviplayer.utils.Constants
 import com.azavern.aviplayer.utils.FileUtils
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -128,6 +129,68 @@ class PlayerViewModel @Inject constructor(
     fun onPrevious() {
         seekTo(0L)
         play()
+    }
+
+    // ---- Gesture (Milestone 5) ----
+
+    /** Maju satu langkah seek (bawaan 10 detik, Constants.DEFAULT_SEEK_STEP_MS). */
+    fun seekForward() {
+        val state = _uiState.value
+        val target = state.currentPositionMs + Constants.DEFAULT_SEEK_STEP_MS
+        seekTo(if (state.durationMs > 0) target.coerceAtMost(state.durationMs) else target)
+    }
+
+    /** Mundur satu langkah seek. */
+    fun seekBackward() {
+        seekTo(_uiState.value.currentPositionMs - Constants.DEFAULT_SEEK_STEP_MS)
+    }
+
+    /** Terapkan level kecerahan baru (diteruskan PlayerActivity ke window). */
+    fun adjustBrightness(level: Float) {
+        _uiState.update { it.copy(brightnessLevel = level.coerceIn(0f, 1f)) }
+    }
+
+    /** Terapkan level volume baru (diteruskan PlayerActivity ke AudioManager). */
+    fun adjustVolume(level: Float) {
+        _uiState.update { it.copy(volumeLevel = level.coerceIn(0f, 1f)) }
+    }
+
+    /**
+     * Sinkronisasi level awal dari sistem, dipanggil PlayerActivity
+     * sebelum konten digambar dan saat kembali ke layar.
+     */
+    fun syncSystemLevels(brightness: Float, volume: Float) {
+        _uiState.update {
+            it.copy(
+                brightnessLevel = brightness.coerceIn(0f, 1f),
+                volumeLevel = volume.coerceIn(0f, 1f)
+            )
+        }
+    }
+
+    /** Pratinjau posisi selama gesture seek — belum seek beneran. */
+    fun onSeekPreview(previewMs: Long) {
+        val duration = _uiState.value.durationMs
+        val coerced = if (duration > 0) {
+            previewMs.coerceIn(0L, duration)
+        } else {
+            previewMs.coerceAtLeast(0L)
+        }
+        _uiState.update { it.copy(seekPreviewMs = coerced) }
+    }
+
+    /** Jari dilepas saat gesture seek: loncat ke posisi pratinjau. */
+    fun commitSeekPreview() {
+        val preview = _uiState.value.seekPreviewMs ?: return
+        _uiState.update { it.copy(seekPreviewMs = null) }
+        seekTo(preview)
+    }
+
+    /** Gesture seek batal (mis. sentuhan terputus): buang pratinjau. */
+    fun clearSeekPreview() {
+        if (_uiState.value.seekPreviewMs != null) {
+            _uiState.update { it.copy(seekPreviewMs = null) }
+        }
     }
 
     /** Tombol kecepatan: bersiklus 0.5 → 0.75 → 1.0 → 1.25 → 1.5 → 2.0 → 0.5. */

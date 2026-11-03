@@ -35,6 +35,13 @@ fun PlayerScreen(
     onRotateClick: () -> Unit,
     onBackClick: () -> Unit,
     onSpeedClick: () -> Unit,
+    onBrightnessChange: (Float) -> Unit,
+    onVolumeChange: (Float) -> Unit,
+    onSeekPreview: (Long) -> Unit,
+    onSeekCommit: () -> Unit,
+    onSeekClear: () -> Unit,
+    onGestureSeekForward: () -> Unit,
+    onGestureSeekBackward: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -44,6 +51,20 @@ fun PlayerScreen(
     ) {
         VideoSurface(
             player = player,
+            modifier = Modifier.fillMaxSize()
+        )
+
+        // Lapisan gesture Milestone 5: di atas video, di bawah kontrol,
+        // sehingga tombol tetap menerima sentuhannya sendiri.
+        GestureOverlay(
+            uiState = uiState,
+            onBrightnessChange = onBrightnessChange,
+            onVolumeChange = onVolumeChange,
+            onSeekPreview = onSeekPreview,
+            onSeekCommit = onSeekCommit,
+            onSeekClear = onSeekClear,
+            onSeekForward = onGestureSeekForward,
+            onSeekBackward = onGestureSeekBackward,
             modifier = Modifier.fillMaxSize()
         )
 
@@ -65,9 +86,7 @@ fun PlayerScreen(
 
         TitleDisplay(
             title = uiState.videoTitle,
-            orientationMode = uiState.orientationMode,
             onBackClick = onBackClick,
-            onRotateClick = onRotateClick,
             modifier = Modifier.align(Alignment.TopCenter)
         )
 
@@ -79,14 +98,17 @@ fun PlayerScreen(
             SeekBarComponent(
                 positionMs = uiState.currentPositionMs,
                 durationMs = uiState.durationMs,
-                onSeekTo = onSeekTo
+                onSeekTo = onSeekTo,
+                previewPositionMs = uiState.seekPreviewMs
             )
             PlayerControls(
                 isPlaying = uiState.isPlaying,
                 playbackSpeed = uiState.playbackSpeed,
+                orientationMode = uiState.orientationMode,
                 onPreviousClick = onPreviousClick,
                 onPlayPauseClick = onPlayPauseClick,
-                onSpeedClick = onSpeedClick
+                onSpeedClick = onSpeedClick,
+                onRotateClick = onRotateClick
             )
         }
     }
