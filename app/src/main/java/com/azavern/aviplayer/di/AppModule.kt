@@ -9,7 +9,10 @@ import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import com.azavern.aviplayer.data.db.AppDatabase
 import com.azavern.aviplayer.data.db.dao.PlaybackStateDao
+import com.azavern.aviplayer.data.repository.FolderRepository
 import com.azavern.aviplayer.data.repository.PlaybackRepository
+import com.azavern.aviplayer.data.repository.VideoRepository
+import com.azavern.aviplayer.data.source.FileScannerDataSource
 import com.azavern.aviplayer.data.source.PreferenceDataSource
 import com.azavern.aviplayer.utils.Constants
 import dagger.Module
@@ -23,8 +26,9 @@ import javax.inject.Singleton
  * Modul DI tingkat aplikasi (Blueprint Bagian 7).
  *
  * Milestone 2: DataStore, AppDatabase (Room 3 + AndroidSQLiteDriver),
- * PlaybackStateDao, PlaybackRepository. DataSource/Repository Beranda
- * ditambahkan di Milestone 3; SettingsRepository di Milestone 4.
+ * PlaybackStateDao, PlaybackRepository.
+ * Milestone 3: FileScannerDataSource, VideoRepository, FolderRepository.
+ * SettingsRepository menyusul di Milestone 4.
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -64,4 +68,20 @@ object AppModule {
     @Singleton
     fun providePlaybackRepository(dao: PlaybackStateDao): PlaybackRepository =
         PlaybackRepository(dao)
+
+    @Provides
+    @Singleton
+    fun provideFileScannerDataSource(
+        @ApplicationContext context: Context
+    ): FileScannerDataSource = FileScannerDataSource(context)
+
+    @Provides
+    @Singleton
+    fun provideVideoRepository(fileScanner: FileScannerDataSource): VideoRepository =
+        VideoRepository(fileScanner)
+
+    @Provides
+    @Singleton
+    fun provideFolderRepository(fileScanner: FileScannerDataSource): FolderRepository =
+        FolderRepository(fileScanner)
 }

@@ -11,5 +11,23 @@
     <string name="player_action_previous">Sebelumnya (mulai ulang)</string>
     <string name="player_action_next">Berikutnya</string>
     <string name="player_action_rotate">Ganti mode orientasi</string>
-    <string name="milestone_marker">Milestone 1</string>
+    <string name="milestone_marker">Milestone 3</string>
+
+    <!-- Beranda (Milestone 3) -->
+    <string name="home_tab_video">Video</string>
+    <string name="home_tab_folder">Folder</string>
+    <string name="home_tab_playlist">Playlist</string>
+    <string name="home_search_hint">Cari video…</string>
+    <string name="home_search_clear">Hapus pencarian</string>
+    <string name="home_empty_videos">Tidak ada video ditemukan</string>
+    <string name="home_empty_videos_hint">Video lokal di perangkatmu akan muncul di sini.</string>
+    <string name="home_empty_folders">Tidak ada folder video</string>
+    <string name="home_empty_playlists">Belum ada playlist</string>
+    <string name="home_empty_playlists_hint">Playlist yang kamu buat akan muncul di sini.</string>
+    <string name="home_permission_title">Izin akses video diperlukan</string>
+    <string name="home_permission_message">aviplayer hanya membaca file video lokal di perangkatmu untuk ditampilkan di sini. Tidak ada data yang dikirim ke mana pun.</string>
+    <string name="home_permission_button">Izinkan Akses</string>
+    <string name="home_video_count">%1$d video</string>
+    <string name="home_close_folder">Tutup folder</string>
+    <string name="home_action_play">Putar</string>
 </resources>
