@@ -21,7 +21,15 @@ data class HomeUiState(
     val hasPermission: Boolean = false,
     val error: String? = null,
     val themeConfig: ThemeConfig = ThemeConfig.Default,
-    val navigation: HomeNavigation? = null
+    val navigation: HomeNavigation? = null,
+    /** Peta videoId → posisi terakhir, untuk bar progres di thumbnail. */
+    val playbackPositions: Map<String, Long> = emptyMap(),
+    /** Video yang paling terakhir diputar: judulnya diwarnai di daftar. */
+    val lastPlayedVideoId: String? = null,
+    val lastPlayedPath: String? = null,
+    val lastPlayedTitle: String? = null,
+    /** Bar mini video terakhir (di atas navigasi bawah) ditutup pengguna. */
+    val miniBarDismissed: Boolean = false
 )
 
 enum class HomeTab { VIDEO, FOLDER, PLAYLIST }

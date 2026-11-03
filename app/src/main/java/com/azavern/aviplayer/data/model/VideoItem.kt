@@ -15,5 +15,9 @@ data class VideoItem(
     val folderName: String,      // BUCKET_DISPLAY_NAME dari MediaStore
     val folderPath: String,      // path folder induk
     val dateAdded: Long,         // timestamp dari MediaStore
-    val thumbnailPath: String?   // path untuk load thumbnail via Coil (nullable)
+    val thumbnailPath: String?,  // path untuk load thumbnail via Coil (nullable)
+    // Dimensi piksel video (MediaStore WIDTH/HEIGHT) untuk label resolusi
+    // di daftar — tambahan 2026-11-03 mengikuti layout referensi Veo.
+    val width: Int = 0,
+    val height: Int = 0
 )

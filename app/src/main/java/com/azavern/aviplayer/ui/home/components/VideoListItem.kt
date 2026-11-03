@@ -5,10 +5,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,9 +28,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,13 +44,21 @@ import com.azavern.aviplayer.utils.FileUtils
 import com.azavern.aviplayer.utils.TimeUtils
 
 /**
- * Satu baris video di daftar Beranda (Blueprint Bagian 7):
- * thumbnail 16:9 + badge durasi | judul, chip folder, ukuran | menu.
+ * Satu baris video di daftar Beranda — layout mengikuti referensi
+ * Veo (2026-11-03):
+ *
+ *   [thumbnail 16:9]  Judul (2 baris; berwarna aksen bila video
+ *    durasi di kanan    terakhir diputar)
+ *    bawah thumbnail   720P  188,19 MB
+ *   [bar progres tipis di tepi bawah thumbnail bila sudah ditonton sebagian]
+ *
  * Thumbnail diambil Coil dari frame video itu sendiri (VideoFrameDecoder).
  */
 @Composable
 fun VideoListItem(
     video: VideoItem,
+    progressFraction: Float?,
+    isLastPlayed: Boolean,
     onVideoClick: (VideoItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -57,7 +68,7 @@ fun VideoListItem(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onVideoClick(video) }
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -73,19 +84,36 @@ fun VideoListItem(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
-            Box(
+            Text(
+                text = TimeUtils.msToTimestamp(video.durationMs),
+                color = Color.White,
+                style = TextStyle(
+                    fontSize = 11.sp,
+                    shadow = Shadow(
+                        color = Color.Black.copy(alpha = 0.85f),
+                        offset = Offset(0f, 0f),
+                        blurRadius = 4f
+                    )
+                ),
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(4.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(Color.Black.copy(alpha = 0.65f))
-            ) {
-                Text(
-                    text = TimeUtils.msToTimestamp(video.durationMs),
-                    color = Color.White,
-                    fontSize = 10.sp,
-                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-                )
+                    .padding(end = 6.dp, bottom = 4.dp)
+            )
+            if (progressFraction != null) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .fillMaxWidth()
+                        .height(3.dp)
+                        .background(Color.White.copy(alpha = 0.35f))
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(progressFraction.coerceIn(0f, 1f))
+                            .height(3.dp)
+                            .background(MaterialTheme.colorScheme.primary)
+                    )
+                }
             }
         }
 
@@ -96,33 +124,26 @@ fun VideoListItem(
         ) {
             Text(
                 text = video.name,
-                style = MaterialTheme.typography.titleSmall,
+                style = MaterialTheme.typography.titleMedium,
+                color = if (isLastPlayed) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                },
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(top = 6.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(50))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                ) {
-                    Text(
-                        text = video.folderName,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = FileUtils.getFileSizeReadable(video.sizeBytes),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            val resolution = FileUtils.getResolutionLabel(video.width, video.height)
+            val metadata = listOf(resolution, FileUtils.getFileSizeReadable(video.sizeBytes))
+                .filter { it.isNotEmpty() }
+                .joinToString(separator = "  ")
+            Text(
+                text = metadata,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                modifier = Modifier.padding(top = 4.dp)
+            )
         }
 
         Box {

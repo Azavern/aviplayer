@@ -71,6 +71,8 @@ class HomeActivity : ComponentActivity() {
         if (isPermissionGranted() && !viewModel.uiState.value.hasPermission) {
             viewModel.onPermissionResult(true)
         }
+        // Segarkan info tontonan (progres & video terakhir) sepulang dari player.
+        viewModel.onResume()
     }
 
     private fun isPermissionGranted(): Boolean =

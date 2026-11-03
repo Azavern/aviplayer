@@ -36,6 +36,8 @@ fun VideoListScreen(
     videos: List<VideoItem>,
     isLoading: Boolean,
     activeFolder: FolderItem?,
+    playbackPositions: Map<String, Long>,
+    lastPlayedVideoId: String?,
     onVideoClick: (VideoItem) -> Unit,
     onCloseFolder: () -> Unit,
     modifier: Modifier = Modifier
@@ -103,7 +105,21 @@ fun VideoListScreen(
             else -> {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(items = videos, key = { it.id }) { video ->
-                        VideoListItem(video = video, onVideoClick = onVideoClick)
+                        val position = playbackPositions[video.id]
+                        val progress = if (
+                            position != null && video.durationMs > 0 &&
+                            position in 1 until video.durationMs
+                        ) {
+                            position.toFloat() / video.durationMs.toFloat()
+                        } else {
+                            null
+                        }
+                        VideoListItem(
+                            video = video,
+                            progressFraction = progress,
+                            isLastPlayed = video.id == lastPlayedVideoId,
+                            onVideoClick = onVideoClick
+                        )
                     }
                 }
             }

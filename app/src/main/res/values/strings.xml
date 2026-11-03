@@ -30,4 +30,5 @@
     <string name="home_video_count">%1$d video</string>
     <string name="home_close_folder">Tutup folder</string>
     <string name="home_action_play">Putar</string>
+    <string name="home_mini_player_close">Tutup bar video terakhir</string>
 </resources>

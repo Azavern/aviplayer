@@ -87,7 +87,9 @@ class FileScannerDataSource @Inject constructor(
             MediaStore.Video.Media.DURATION,
             MediaStore.Video.Media.SIZE,
             MediaStore.Video.Media.BUCKET_DISPLAY_NAME,
-            MediaStore.Video.Media.DATE_ADDED
+            MediaStore.Video.Media.DATE_ADDED,
+            MediaStore.Video.Media.WIDTH,
+            MediaStore.Video.Media.HEIGHT
         )
         val results = mutableListOf<VideoItem>()
         val cursor: Cursor? = context.contentResolver.query(
@@ -104,6 +106,8 @@ class FileScannerDataSource @Inject constructor(
             val sizeIdx = c.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)
             val bucketIdx = c.getColumnIndexOrThrow(MediaStore.Video.Media.BUCKET_DISPLAY_NAME)
             val dateIdx = c.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_ADDED)
+            val widthIdx = c.getColumnIndexOrThrow(MediaStore.Video.Media.WIDTH)
+            val heightIdx = c.getColumnIndexOrThrow(MediaStore.Video.Media.HEIGHT)
             while (c.moveToNext()) {
                 val path = c.getString(dataIdx) ?: continue
                 val fileName = c.getString(nameIdx) ?: File(path).name
@@ -120,7 +124,9 @@ class FileScannerDataSource @Inject constructor(
                     folderName = c.getString(bucketIdx) ?: File(folderPath).name.orEmpty(),
                     folderPath = folderPath,
                     dateAdded = c.getLong(dateIdx),
-                    thumbnailPath = path
+                    thumbnailPath = path,
+                    width = c.getInt(widthIdx),
+                    height = c.getInt(heightIdx)
                 )
             }
         }

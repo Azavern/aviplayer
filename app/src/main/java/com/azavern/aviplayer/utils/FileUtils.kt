@@ -40,6 +40,25 @@ object FileUtils {
     }
 
     /**
+     * Label resolusi ala pemutar video ("720P", "1080P") dari dimensi
+     * piksel — memakai sisi pendek frame (tinggi pada video landscape,
+     * lebar pada portrait). String kosong bila dimensi tidak diketahui.
+     */
+    fun getResolutionLabel(width: Int, height: Int): String {
+        val shortSide = minOf(width, height)
+        return when {
+            shortSide <= 0 -> ""
+            shortSide <= 240 -> "240P"
+            shortSide <= 360 -> "360P"
+            shortSide <= 480 -> "480P"
+            shortSide <= 720 -> "720P"
+            shortSide <= 1080 -> "1080P"
+            shortSide <= 1440 -> "1440P"
+            else -> "2160P"
+        }
+    }
+
+    /**
      * Normalisasi path untuk perbandingan (dipakai FolderRepository):
      * buang spasi tepi, gabungkan slash ganda, buang slash di akhir
      * (kecuali root "/"). Case TIDAK diubah — path Android case-sensitive.

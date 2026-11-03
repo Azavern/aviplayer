@@ -18,6 +18,14 @@ interface PlaybackStateDao {
     @Query("SELECT * FROM playback_state WHERE videoId = :videoId")
     suspend fun getByVideoId(videoId: String): PlaybackStateEntity?
 
+    /** Semua posisi tersimpan — untuk bar progres di daftar video. */
+    @Query("SELECT * FROM playback_state")
+    suspend fun getAll(): List<PlaybackStateEntity>
+
+    /** Video yang paling terakhir diputar (updatedAt terbesar). */
+    @Query("SELECT * FROM playback_state ORDER BY updatedAt DESC LIMIT 1")
+    suspend fun getMostRecent(): PlaybackStateEntity?
+
     @Query("DELETE FROM playback_state")
     suspend fun deleteAll()
 }

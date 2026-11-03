@@ -467,6 +467,11 @@ app/src/main/java/com/[package]/avp/
 │   │   │     Filter ekstensi (pagar Veo 2026-11-03): hanya .mp4/.mkv/.mov
 │   │   │       yang dikembalikan; ekstensi lain (mis. .ts) disaring di
 │   │   │       queryVideos() sehingga tidak tampil di mana pun.
+│   │   │     Layout daftar (referensi Veo 2026-11-03): metadata satu baris
+│   │   │       "720P  188,19 MB" (WIDTH/HEIGHT + SIZE); bar progres tontonan
+│   │   │       di tepi bawah thumbnail; judul video terakhir diputar berwarna
+│   │   │       aksen; bar mini video terakhir di atas navigasi (opsional).
+│   │   │       Data progres/terakhir dari PlaybackRepository (playback_state).
 │   │   │     fun scanAllVideos(): List<VideoItem>
 │   │   │       → query semua video, sort by DATE_ADDED DESC
 │   │   │

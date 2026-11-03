@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.azavern.aviplayer.data.model.FolderItem
 import com.azavern.aviplayer.data.model.VideoItem
 import com.azavern.aviplayer.data.repository.FolderRepository
+import com.azavern.aviplayer.data.repository.PlaybackRepository
 import com.azavern.aviplayer.data.repository.SettingsRepository
 import com.azavern.aviplayer.data.repository.VideoRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,7 +29,8 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val videoRepository: VideoRepository,
     private val folderRepository: FolderRepository,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val playbackRepository: PlaybackRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -52,7 +54,60 @@ class HomeViewModel @Inject constructor(
         if (granted) {
             loadVideos()
             loadFolders()
+            refreshPlaybackInfo()
         }
+    }
+
+    /**
+     * Dipanggil HomeActivity.onStart: segarkan info tontonan (bar
+     * progres, penanda video terakhir, bar mini) setelah pengguna
+     * kembali dari PlayerActivity.
+     */
+    fun onResume() {
+        if (_uiState.value.hasPermission) refreshPlaybackInfo()
+    }
+
+    private fun refreshPlaybackInfo() {
+        viewModelScope.launch {
+            val positions = playbackRepository.getAllPositions()
+            val lastPlayed = playbackRepository.getLastPlayed()
+            _uiState.update { state ->
+                state.copy(
+                    playbackPositions = positions,
+                    lastPlayedVideoId = lastPlayed?.videoId,
+                    lastPlayedPath = lastPlayed?.videoPath,
+                    lastPlayedTitle = lastPlayed?.videoPath
+                        ?.substringAfterLast('/')
+                        ?.substringBeforeLast('.'),
+                    // Video terakhir berganti → bar mini boleh tampil lagi.
+                    miniBarDismissed = if (lastPlayed?.videoId != state.lastPlayedVideoId) {
+                        false
+                    } else {
+                        state.miniBarDismissed
+                    }
+                )
+            }
+        }
+    }
+
+    /** Tap bar mini → putar video terakhir (resume bekerja lewat Milestone 2). */
+    fun onMiniPlayerClicked() {
+        val state = _uiState.value
+        val path = state.lastPlayedPath ?: return
+        val id = state.lastPlayedVideoId ?: return
+        _uiState.update {
+            it.copy(
+                navigation = HomeNavigation.ToPlayer(
+                    path = path,
+                    id = id,
+                    title = state.lastPlayedTitle ?: ""
+                )
+            )
+        }
+    }
+
+    fun onMiniBarDismissed() {
+        _uiState.update { it.copy(miniBarDismissed = true) }
     }
 
     fun loadVideos() {

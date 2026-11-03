@@ -60,10 +60,22 @@ fun HomeScreen(
             TopAppBar(title = { Text(stringResource(R.string.app_name)) })
         },
         bottomBar = {
-            BottomNavBar(
-                activeTab = uiState.activeTab,
-                onTabSelected = viewModel::onTabSelected
-            )
+            Column {
+                if (uiState.hasPermission && !uiState.miniBarDismissed &&
+                    uiState.lastPlayedPath != null
+                ) {
+                    MiniPlayerBar(
+                        title = uiState.lastPlayedTitle.orEmpty(),
+                        thumbnailPath = uiState.lastPlayedPath,
+                        onPlayClick = viewModel::onMiniPlayerClicked,
+                        onDismiss = viewModel::onMiniBarDismissed
+                    )
+                }
+                BottomNavBar(
+                    activeTab = uiState.activeTab,
+                    onTabSelected = viewModel::onTabSelected
+                )
+            }
         }
     ) { innerPadding ->
         Box(
@@ -83,6 +95,8 @@ fun HomeScreen(
                             videos = uiState.videos,
                             isLoading = uiState.isLoading,
                             activeFolder = uiState.activeFolder,
+                            playbackPositions = uiState.playbackPositions,
+                            lastPlayedVideoId = uiState.lastPlayedVideoId,
                             onVideoClick = viewModel::onVideoClicked,
                             onCloseFolder = viewModel::onCloseFolder
                         )
