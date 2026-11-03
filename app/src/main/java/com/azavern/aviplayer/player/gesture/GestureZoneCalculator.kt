@@ -1,27 +1,29 @@
 package com.azavern.aviplayer.player.gesture
 
 /**
- * Zona sentuh player (Blueprint Bagian 7): sepertiga kiri layar untuk
- * kecerahan, sepertiga kanan untuk volume, tengah untuk seek.
+ * Area sentuh player untuk gesture VERTIKAL (koreksi Veo 2026-11-04):
+ * layar hanya dibagi DUA — paruh kiri kecerahan, paruh kanan volume.
+ *
+ * Gesture HORIZONTAL tidak memakai area sama sekali: menggeser ke
+ * kiri/kanan di mana pun adalah seek. Yang membedakan aksi adalah
+ * ARAH gerakan, bukan posisi mulai. (Blueprint awalnya membagi layar
+ * jadi tiga zona dengan seek hanya di tengah — digantikan model ini.)
  */
-enum class GestureZone { BRIGHTNESS, SEEK, VOLUME, NONE }
+enum class GestureZone { BRIGHTNESS, VOLUME, NONE }
 
 /**
- * Utility stateless untuk kalkulasi zona dan nilai dari gesture
- * (Blueprint Bagian 7). Semua fungsi murni — mudah diuji.
+ * Utility stateless untuk kalkulasi area dan nilai dari gesture.
+ * Semua fungsi murni — mudah diuji.
  */
 object GestureZoneCalculator {
 
     /** Geser selebar layar penuh = seek selebar durasi penuh. */
     private const val SEEK_SENSITIVITY = 1.0f
 
+    /** Paruh layar tempat gesture dimulai: kiri = brightness, kanan = volume. */
     fun getZone(x: Float, screenWidth: Float): GestureZone {
         if (screenWidth <= 0f) return GestureZone.NONE
-        return when {
-            x < screenWidth * 0.33f -> GestureZone.BRIGHTNESS
-            x > screenWidth * 0.67f -> GestureZone.VOLUME
-            else -> GestureZone.SEEK
-        }
+        return if (x < screenWidth * 0.5f) GestureZone.BRIGHTNESS else GestureZone.VOLUME
     }
 
     /** Drag ke atas = lebih terang. Hasil dibatasi -1f..1f. */

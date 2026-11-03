@@ -51,14 +51,14 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
- * Lapisan gesture di atas permukaan video (Blueprint Bagian 7 &
- * Milestone 5). Mendeteksi:
+ * Lapisan gesture di atas permukaan video (Milestone 5, model area
+ * koreksi Veo 2026-11-04). Yang membedakan aksi adalah ARAH gerakan:
  *
- * - Drag vertikal zona kiri  → kecerahan (feedback ikon + persen)
- * - Drag vertikal zona kanan → volume (feedback ikon + persen)
- * - Drag horizontal zona tengah → pratinjau seek; seek beneran
+ * - Drag VERTIKAL: paruh kiri layar → kecerahan, paruh kanan → volume
+ *   (feedback ikon + persen)
+ * - Drag HORIZONTAL di mana pun → pratinjau seek; seek beneran
  *   terjadi saat jari dilepas (uiState.seekPreviewMs)
- * - Double tap kiri/kanan → mundur/maju 10 detik + ripple animasi
+ * - Double tap paruh kiri/kanan → mundur/maju 10 detik + ripple
  *
  * Sentuhan yang sudah dikonsumsi tombol/slider (down.isConsumed)
  * diabaikan sepenuhnya, jadi gesture tidak berebut dengan kontrol.
@@ -122,7 +122,8 @@ fun GestureOverlay(
                         if (moved) {
                             change.consume()
                             when (horizontal) {
-                                true -> if (zone == GestureZone.SEEK) {
+                                // Horizontal = seek, tanpa memandang area mulai.
+                                true -> {
                                     val deltaMs = GestureZoneCalculator.calculateSeekDeltaMs(
                                         totalDx, size.width.toFloat(), durationMs
                                     )
@@ -191,7 +192,7 @@ fun GestureOverlay(
                         } else {
                             lastTap = TapRecord(released.uptimeMillis, zone)
                         }
-                    } else if (horizontal == true && zone == GestureZone.SEEK) {
+                    } else if (horizontal == true) {
                         onSeekCommit()
                     }
                     levelFeedback = null

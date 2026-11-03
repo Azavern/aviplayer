@@ -677,12 +677,14 @@ app/src/main/java/com/[package]/avp/
 │       └── GestureZoneCalculator.kt
 │             Utility stateless untuk kalkulasi zona dan nilai dari gesture.
 │
-│             enum class GestureZone { BRIGHTNESS, SEEK, VOLUME, NONE }
+│             enum class GestureZone { BRIGHTNESS, VOLUME, NONE }
 │
 │             fun getZone(x: Float, screenWidth: Float): GestureZone
-│               → x < screenWidth * 0.33f → BRIGHTNESS
-│               → x > screenWidth * 0.67f → VOLUME
-│               → else                    → SEEK
+│               → x < screenWidth * 0.5f → BRIGHTNESS (paruh kiri)
+│               → else                   → VOLUME (paruh kanan)
+│               (Koreksi Veo 2026-11-04: zona hanya untuk gesture VERTIKAL;
+│                gesture HORIZONTAL di mana pun = seek — arah menentukan
+│                aksi, bukan posisi. Model tiga zona versi awal diganti.)
 │
 │             fun calculateBrightnessDelta(dy: Float, screenHeight: Float): Float
 │               → dy / screenHeight * -1f  (drag ke atas = terang)
