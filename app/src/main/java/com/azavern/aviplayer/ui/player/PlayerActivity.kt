@@ -107,6 +107,7 @@ class PlayerActivity : ComponentActivity() {
                     onSeekClear = viewModel::clearSeekPreview,
                     onGestureSeekForward = viewModel::seekForward,
                     onGestureSeekBackward = viewModel::seekBackward,
+                    onTogglePlayPause = viewModel::togglePlayPause,
                     onCaptureClick = viewModel::captureFrame,
                     onCaptureResultConsumed = viewModel::onCaptureResultConsumed
                 )

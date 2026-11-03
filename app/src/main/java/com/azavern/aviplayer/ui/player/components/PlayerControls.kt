@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.ScreenRotation
 import androidx.compose.material.icons.rounded.SkipNext
@@ -38,8 +39,12 @@ import java.util.Locale
  * ikonnya — putar otomatis / ponsel landscape / ponsel portrait.
  * Nama mode tetap jadi contentDescription untuk aksesibilitas.
  *
+ * Tombol capture frame (Milestone 6) duduk di kanan, tepat di samping
+ * tombol kecepatan — dipindah ke sini dari tepi kiri tengah atas
+ * perintah Veo 2026-11-04 karena posisi lama mengganggu.
+ *
  * Yang belum digambar dari referensi (menunggu milestone fiturnya):
- * kunci di kiri (kunci kontrol), ikon tangkapan di kanan (Milestone 6).
+ * kunci di kiri (kunci kontrol).
  *
  * Tombol NEXT tetap nonaktif: belum ada antrean (folder/playlist
  * datang di milestone Beranda & Playlist).
@@ -53,6 +58,7 @@ fun PlayerControls(
     onPlayPauseClick: () -> Unit,
     onSpeedClick: () -> Unit,
     onRotateClick: () -> Unit,
+    onCaptureClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -98,6 +104,13 @@ fun PlayerControls(
             modifier = Modifier.align(Alignment.CenterEnd),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            IconButton(onClick = onCaptureClick) {
+                Icon(
+                    imageVector = Icons.Rounded.PhotoCamera,
+                    contentDescription = stringResource(R.string.player_action_capture),
+                    tint = Color.White
+                )
+            }
             TextButton(onClick = onSpeedClick) {
                 Text(
                     text = String.format(Locale.US, "%.1f×", playbackSpeed),

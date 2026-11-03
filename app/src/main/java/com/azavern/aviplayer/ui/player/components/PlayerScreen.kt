@@ -6,11 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -53,6 +49,7 @@ fun PlayerScreen(
     onSeekClear: () -> Unit,
     onGestureSeekForward: () -> Unit,
     onGestureSeekBackward: () -> Unit,
+    onTogglePlayPause: () -> Unit,
     onCaptureClick: () -> Unit,
     onCaptureResultConsumed: () -> Unit,
     modifier: Modifier = Modifier
@@ -95,6 +92,7 @@ fun PlayerScreen(
             onSeekClear = onSeekClear,
             onSeekForward = onGestureSeekForward,
             onSeekBackward = onGestureSeekBackward,
+            onTogglePlayPause = onTogglePlayPause,
             modifier = Modifier.fillMaxSize()
         )
 
@@ -119,21 +117,6 @@ fun PlayerScreen(
             onBackClick = onBackClick,
             modifier = Modifier.align(Alignment.TopCenter)
         )
-
-        // Tombol capture frame (Milestone 6) — posisi tepi kiri tengah
-        // persis referensi Veo; datar tanpa latar seperti tombol lain.
-        IconButton(
-            onClick = onCaptureClick,
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .padding(start = 4.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.PhotoCamera,
-                contentDescription = stringResource(R.string.player_action_capture),
-                tint = Color.White
-            )
-        }
 
         SnackbarHost(
             hostState = snackbarHostState,
@@ -160,7 +143,8 @@ fun PlayerScreen(
                 onPreviousClick = onPreviousClick,
                 onPlayPauseClick = onPlayPauseClick,
                 onSpeedClick = onSpeedClick,
-                onRotateClick = onRotateClick
+                onRotateClick = onRotateClick,
+                onCaptureClick = onCaptureClick
             )
         }
     }

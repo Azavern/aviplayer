@@ -22,6 +22,8 @@ import androidx.compose.material.icons.filled.BrightnessMedium
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.FastRewind
 import androidx.compose.material.icons.filled.Forward10
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay10
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.VolumeUp
@@ -58,7 +60,11 @@ import kotlin.math.roundToInt
  *   (feedback ikon + persen)
  * - Drag HORIZONTAL di mana pun → pratinjau seek; seek beneran
  *   terjadi saat jari dilepas (uiState.seekPreviewMs)
- * - Double tap paruh kiri/kanan → mundur/maju 10 detik + ripple
+ * - Double tap memakai petanya sendiri (koreksi Veo 2026-11-04):
+ *   layar bertiga khusus ketukan — sepertiga kiri mundur 10 detik,
+ *   sepertiga kanan maju 10 detik, TENGAH jeda/lanjut putar.
+ *   Peta tiga area ini HANYA untuk double tap; drag tetap memakai
+ *   model arah + dua paruh di atas.
  *
  * Sentuhan yang sudah dikonsumsi tombol/slider (down.isConsumed)
  * diabaikan sepenuhnya, jadi gesture tidak berebut dengan kontrol.
@@ -75,6 +81,7 @@ fun GestureOverlay(
     onSeekClear: () -> Unit,
     onSeekForward: () -> Unit,
     onSeekBackward: () -> Unit,
+    onTogglePlayPause: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val stateRef = rememberUpdatedState(uiState)
@@ -157,40 +164,45 @@ fun GestureOverlay(
                         // Sentuhan hilang di tengah jalan: batalkan pratinjau.
                         onSeekClear()
                     } else if (!moved) {
-                        // Tap: cek double tap pada zona yang sama.
+                        // Tap: cek double tap pada area ketuk yang sama.
+                        val tapZone = tapZoneOf(startX, size.width.toFloat())
                         val previous = lastTap
                         val isDouble = previous != null &&
                             released.uptimeMillis - previous.uptimeMillis < 300L &&
-                            GestureZoneCalculator.getZone(startX, size.width.toFloat()) == previous.zone
+                            tapZone == previous.zone
                         if (isDouble) {
                             lastTap = null
-                            when (zone) {
-                                GestureZone.BRIGHTNESS -> {
+                            val tapOffset = DpOffset(
+                                (startX / density).dp,
+                                (startY / density).dp
+                            )
+                            when (tapZone) {
+                                TapZone.BACKWARD -> {
                                     onSeekBackward()
                                     ripple = RippleState(
-                                        forward = false,
-                                        offset = DpOffset(
-                                            (startX / density).dp,
-                                            (startY / density).dp
-                                        ),
-                                        id = released.uptimeMillis
+                                        TapRippleIcon.BACKWARD, tapOffset, released.uptimeMillis
                                     )
                                 }
-                                GestureZone.VOLUME -> {
+                                TapZone.FORWARD -> {
                                     onSeekForward()
                                     ripple = RippleState(
-                                        forward = true,
-                                        offset = DpOffset(
-                                            (startX / density).dp,
-                                            (startY / density).dp
-                                        ),
-                                        id = released.uptimeMillis
+                                        TapRippleIcon.FORWARD, tapOffset, released.uptimeMillis
                                     )
                                 }
-                                else -> Unit
+                                TapZone.PAUSE -> {
+                                    // Ikon mengikuti hasil toggle: sedang
+                                    // memutar → tampilkan jeda, dan sebaliknya.
+                                    val icon = if (snapshot.isPlaying) {
+                                        TapRippleIcon.PAUSE
+                                    } else {
+                                        TapRippleIcon.PLAY
+                                    }
+                                    onTogglePlayPause()
+                                    ripple = RippleState(icon, tapOffset, released.uptimeMillis)
+                                }
                             }
                         } else {
-                            lastTap = TapRecord(released.uptimeMillis, zone)
+                            lastTap = TapRecord(released.uptimeMillis, tapZone)
                         }
                     } else if (horizontal == true) {
                         onSeekCommit()
@@ -233,9 +245,21 @@ private enum class LevelKind { BRIGHTNESS, VOLUME }
 
 private data class LevelFeedback(val kind: LevelKind, val fraction: Float)
 
-private data class TapRecord(val uptimeMillis: Long, val zone: GestureZone)
+/** Area khusus double tap: sepertiga layar (koreksi Veo 2026-11-04). */
+private enum class TapZone { BACKWARD, PAUSE, FORWARD }
 
-private data class RippleState(val forward: Boolean, val offset: DpOffset, val id: Long)
+private enum class TapRippleIcon { FORWARD, BACKWARD, PAUSE, PLAY }
+
+private fun tapZoneOf(x: Float, screenWidth: Float): TapZone = when {
+    screenWidth <= 0f -> TapZone.PAUSE
+    x < screenWidth / 3f -> TapZone.BACKWARD
+    x > screenWidth * 2f / 3f -> TapZone.FORWARD
+    else -> TapZone.PAUSE
+}
+
+private data class TapRecord(val uptimeMillis: Long, val zone: TapZone)
+
+private data class RippleState(val icon: TapRippleIcon, val offset: DpOffset, val id: Long)
 
 @Composable
 private fun LevelFeedbackIndicator(feedback: LevelFeedback, modifier: Modifier = Modifier) {
@@ -323,7 +347,12 @@ private fun TapRipple(state: RippleState, onFinished: () -> Unit) {
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            imageVector = if (state.forward) Icons.Filled.Forward10 else Icons.Filled.Replay10,
+            imageVector = when (state.icon) {
+                TapRippleIcon.FORWARD -> Icons.Filled.Forward10
+                TapRippleIcon.BACKWARD -> Icons.Filled.Replay10
+                TapRippleIcon.PAUSE -> Icons.Filled.Pause
+                TapRippleIcon.PLAY -> Icons.Filled.PlayArrow
+            },
             contentDescription = null,
             tint = Color.White.copy(alpha = (1f - progress.value).coerceIn(0f, 1f)),
             modifier = Modifier.size(36.dp)

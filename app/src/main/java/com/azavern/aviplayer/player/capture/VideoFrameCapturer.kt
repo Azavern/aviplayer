@@ -30,6 +30,12 @@ class VideoFrameCapturer @Inject constructor(
     /**
      * Ambil frame pada [positionMs]. Perhatian: getFrameAtTime
      * menerima waktu dalam MICROSECONDS — makanya dikali 1000.
+     *
+     * Opsinya OPTION_CLOSEST (frame-akurat), BUKAN OPTION_CLOSEST_SYNC:
+     * varian SYNC mengembalikan keyframe terdekat yang jaraknya bisa
+     * 1–2 detik dari posisi tekan — hasil tangkapan terasa "loncat"
+     * (laporan Veo 2026-11-04). CLOSEST mendekode sampai frame yang
+     * benar-benar terdekat dengan waktu yang diminta.
      */
     suspend fun captureFrame(videoPath: String, positionMs: Long): Result<Bitmap> =
         withContext(Dispatchers.IO) {
@@ -42,7 +48,7 @@ class VideoFrameCapturer @Inject constructor(
                     )?.toIntOrNull() ?: 0
                     val frame = retriever.getFrameAtTime(
                         positionMs * 1000L,
-                        MediaMetadataRetriever.OPTION_CLOSEST_SYNC
+                        MediaMetadataRetriever.OPTION_CLOSEST
                     ) ?: throw IllegalStateException("Frame tidak tersedia di posisi ini")
                     BitmapUtils.rotateBitmapIfNeeded(frame, rotation)
                 } finally {
