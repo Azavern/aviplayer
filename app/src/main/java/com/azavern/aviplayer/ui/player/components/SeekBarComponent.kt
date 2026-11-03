@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
@@ -35,7 +36,11 @@ import com.azavern.aviplayer.utils.TimeUtils
  * Catatan: UI.md menetapkan isian seekbar lavender — warna putih di
  * sini mengikuti referensi terbaru Veo, yang kedudukannya di atas
  * dokumen (urutan sumber kebenaran di AGENTS.md).
+ *
+ * Slot thumb/track kustom Slider masih berstatus eksperimental di
+ * Material 3, maka perlu @OptIn di bawah.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SeekBarComponent(
     positionMs: Long,
