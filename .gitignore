@@ -1,0 +1,21 @@
+# Gradle & build output
+.gradle/
+build/
+*/build/
+out/
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+local.properties
+
+# Keystore & signing (jangan pernah commit)
+*.jks
+*.keystore
+keystore.properties
+
+# Lainnya
+.DS_Store
+captures/
+.externalNativeBuild/
+.cxx/
