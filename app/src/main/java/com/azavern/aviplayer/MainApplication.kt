@@ -4,7 +4,7 @@ import android.app.Application
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
-import coil3.decode.VideoFrameDecoder
+import coil3.video.VideoFrameDecoder
 import dagger.hilt.android.HiltAndroidApp
 
 /**
