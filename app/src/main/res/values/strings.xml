@@ -1,4 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">aviplayer</string>
+
+    <!-- Player (Milestone 1) -->
+    <string name="player_mode_auto">Otomatis</string>
+    <string name="player_mode_landscape">Landscape</string>
+    <string name="player_mode_portrait">Portrait</string>
+    <string name="player_action_play">Putar</string>
+    <string name="player_action_pause">Jeda</string>
+    <string name="player_action_previous">Sebelumnya (mulai ulang)</string>
+    <string name="player_action_next">Berikutnya</string>
+    <string name="player_action_rotate">Ganti mode orientasi</string>
+    <string name="milestone_marker">Milestone 1</string>
 </resources>
