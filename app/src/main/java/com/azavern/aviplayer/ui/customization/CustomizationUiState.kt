@@ -3,6 +3,7 @@ package com.azavern.aviplayer.ui.customization
 import com.azavern.aviplayer.data.model.ControlLayoutConfig
 import com.azavern.aviplayer.data.model.FolderItem
 import com.azavern.aviplayer.data.model.FolderVisibilityConfig
+import com.azavern.aviplayer.data.model.SeekConfig
 import com.azavern.aviplayer.data.model.ThemeConfig
 import com.azavern.aviplayer.data.model.TitleConfig
 
@@ -13,6 +14,8 @@ enum class CustomizationTab { TITLE, CONTROLS, THEME, WHITELIST }
 data class CustomizationUiState(
     val titleConfig: TitleConfig = TitleConfig.Default,
     val controlLayoutConfig: ControlLayoutConfig = ControlLayoutConfig.Default,
+    /** Durasi lewati double-tap (maju/mundur terpisah), diedit di tab Tombol. */
+    val seekConfig: SeekConfig = SeekConfig.Default,
     val themeConfig: ThemeConfig = ThemeConfig.Default,
     /** Konfigurasi whitelist folder (Milestone 9). */
     val folderVisibilityConfig: FolderVisibilityConfig = FolderVisibilityConfig.Default,

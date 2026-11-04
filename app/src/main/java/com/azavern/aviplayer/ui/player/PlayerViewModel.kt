@@ -13,7 +13,6 @@ import com.azavern.aviplayer.player.core.PlayerState
 import com.azavern.aviplayer.player.capture.VideoFrameCapturer
 import com.azavern.aviplayer.player.core.VideoPlayerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
-import com.azavern.aviplayer.utils.Constants
 import com.azavern.aviplayer.utils.FileUtils
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -131,6 +130,7 @@ class PlayerViewModel @Inject constructor(
             _uiState.update { it.copy(currentPositionMs = lastPosition) }
             playerManager.prepare(path, startPositionMs = lastPosition)
             playerManager.setSpeed(_uiState.value.playbackSpeed)
+            playerManager.setMuted(_uiState.value.isMuted)
             startPositionTicker()
         }
     }
@@ -142,6 +142,7 @@ class PlayerViewModel @Inject constructor(
             playerManager.setEventListener(PlayerEventListener { event -> onPlayerEvent(event) })
             playerManager.prepare(state.videoPath, startPositionMs = state.currentPositionMs)
             playerManager.setSpeed(state.playbackSpeed)
+            playerManager.setMuted(state.isMuted)
             startPositionTicker()
         }
     }
@@ -223,21 +224,34 @@ class PlayerViewModel @Inject constructor(
             _uiState.update { it.copy(currentPositionMs = lastPosition) }
             playerManager.prepare(item.path, startPositionMs = lastPosition)
             playerManager.setSpeed(_uiState.value.playbackSpeed)
+            playerManager.setMuted(_uiState.value.isMuted)
         }
     }
 
     // ---- Gesture (Milestone 5) ----
 
-    /** Maju satu langkah seek (bawaan 10 detik, Constants.DEFAULT_SEEK_STEP_MS). */
+    /**
+     * Maju satu langkah seek. Durasinya dari SeekConfig pengguna
+     * (tab Tombol di Kustomisasi; bawaan 10 detik) — maju dan mundur
+     * diatur terpisah.
+     */
     fun seekForward() {
         val state = _uiState.value
-        val target = state.currentPositionMs + Constants.DEFAULT_SEEK_STEP_MS
+        val target = state.currentPositionMs + state.playerUiConfig.seekConfig.forwardMs
         seekTo(if (state.durationMs > 0) target.coerceAtMost(state.durationMs) else target)
     }
 
-    /** Mundur satu langkah seek. */
+    /** Mundur satu langkah seek (durasi SeekConfig, terpisah dari maju). */
     fun seekBackward() {
-        seekTo(_uiState.value.currentPositionMs - Constants.DEFAULT_SEEK_STEP_MS)
+        val state = _uiState.value
+        seekTo(state.currentPositionMs - state.playerUiConfig.seekConfig.backwardMs)
+    }
+
+    /** Tombol bisu: bisukan / kembalikan suara di level player. */
+    fun toggleMute() {
+        val muted = !_uiState.value.isMuted
+        playerManager.setMuted(muted)
+        _uiState.update { it.copy(isMuted = muted) }
     }
 
     /**

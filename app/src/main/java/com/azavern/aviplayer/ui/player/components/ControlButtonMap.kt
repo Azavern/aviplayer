@@ -10,6 +10,8 @@ import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material.icons.rounded.StayCurrentLandscape
 import androidx.compose.material.icons.rounded.StayCurrentPortrait
+import androidx.compose.material.icons.rounded.VolumeOff
+import androidx.compose.material.icons.rounded.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -37,7 +39,8 @@ data class PlayerControlActions(
     val onNext: () -> Unit,
     val onRotate: () -> Unit,
     val onCapture: () -> Unit,
-    val onSpeed: () -> Unit
+    val onSpeed: () -> Unit,
+    val onMute: () -> Unit
 )
 
 /**
@@ -128,6 +131,24 @@ fun ControlSlotButton(
                 text = String.format(Locale.US, "%.1f×", uiState.playbackSpeed),
                 color = Color.White,
                 style = MaterialTheme.typography.titleSmall
+            )
+        }
+
+        ControlSlot.MUTE -> IconButton(onClick = actions.onMute, modifier = modifier) {
+            Icon(
+                imageVector = if (uiState.isMuted) {
+                    Icons.Rounded.VolumeOff
+                } else {
+                    Icons.Rounded.VolumeUp
+                },
+                contentDescription = stringResource(
+                    if (uiState.isMuted) {
+                        R.string.player_action_unmute
+                    } else {
+                        R.string.player_action_mute
+                    }
+                ),
+                tint = Color.White
             )
         }
 

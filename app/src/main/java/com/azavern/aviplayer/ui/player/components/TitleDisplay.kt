@@ -62,16 +62,19 @@ import java.util.Locale
  * bersama milestone fiturnya masing-masing.
  *
  * Milestone 7: gaya teks judul mengikuti [TitleConfig] (ukuran,
- * baris, warna, tebal, marquee), dan slot atas layout kontrol
- * dirender di sini — [topLeftSlot] sebelum panah kembali,
- * [topRightSlots] sesudah indikator baterai/jam. Keduanya kosong
- * pada layout bawaan, jadi bar ini tampil persis seperti sebelumnya.
+ * baris, warna, tebal, marquee), dan slot atas-kanan layout kontrol
+ * dirender di sini sesudah indikator baterai/jam.
+ *
+ * Area KIRI ATAS TERKUNCI (perintah Veo 2026-11-04): panah kembali
+ * selalu yang pertama dan tidak ada slot yang bisa menempati posisi
+ * sebelum/sesudahnya — area ini tetap, hanya gaya judulnya yang
+ * bisa diubah (tab Judul). Slot kiri atas sudah tidak dirender di
+ * sini; layout lama yang menyimpannya dibersihkan SettingsRepository.
  */
 @Composable
 fun TitleDisplay(
     title: String,
     titleConfig: TitleConfig,
-    topLeftSlot: ControlSlot,
     topRightSlots: List<ControlSlot>,
     uiState: PlayerUiState,
     actions: PlayerControlActions,
@@ -84,9 +87,6 @@ fun TitleDisplay(
             .padding(horizontal = 4.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        if (topLeftSlot != ControlSlot.EMPTY) {
-            ControlSlotButton(slot = topLeftSlot, uiState = uiState, actions = actions)
-        }
         IconButton(onClick = onBackClick) {
             Icon(
                 imageVector = Icons.AutoMirrored.Rounded.ArrowBack,

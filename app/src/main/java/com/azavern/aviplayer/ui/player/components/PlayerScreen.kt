@@ -10,7 +10,9 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -22,6 +24,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,6 +38,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.azavern.aviplayer.player.core.PlayerState
 import com.azavern.aviplayer.ui.player.CaptureResult
 import com.azavern.aviplayer.ui.player.PlayerUiState
+import com.azavern.aviplayer.utils.Constants
 import kotlinx.coroutines.delay
 
 /**
@@ -38,7 +46,14 @@ import kotlinx.coroutines.delay
  * memenuhi layar, bar atas dan gugus kontrol bawah MELAYANG di atasnya
  * (overlay), semua datar tanpa latar di balik tombol.
  *
- * Stateless: semua state dari [uiState], semua aksi lewat callback.
+ * Kontrol menyembunyikan diri (perintah Veo 2026-11-04): saat video
+ * berjalan, sesudah 3 detik tanpa interaksi bar atas meluncur ke
+ * atas dan gugus bawah meluncur ke bawah keluar layar. Saat jeda
+ * kontrol selalu tampil. Ketuk sekali di area bukan tombol (lewat
+ * GestureOverlay) membalik tampil/sembunyi kapan pun.
+ *
+ * Stateless untuk state player: semua state dari [uiState], semua
+ * aksi lewat callback. Visibilitas kontrol adalah state lokal layar.
  */
 @Composable
 fun PlayerScreen(
@@ -61,6 +76,7 @@ fun PlayerScreen(
     onTogglePlayPause: () -> Unit,
     onCaptureClick: () -> Unit,
     onCaptureResultConsumed: () -> Unit,
+    onMuteClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     // Lencana hasil capture tampil ±1,5 detik, lalu state dibersihkan
@@ -72,13 +88,36 @@ fun PlayerScreen(
         }
     }
 
+    // ---- Sembunyi otomatis kontrol ----
+    var controlsVisible by remember { mutableStateOf(true) }
+    var lastInteractionAt by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    fun noteInteraction() {
+        lastInteractionAt = System.currentTimeMillis()
+    }
+
+    // Video berhenti/jeda → kontrol selalu tampil.
+    LaunchedEffect(uiState.isPlaying) {
+        if (!uiState.isPlaying) controlsVisible = true
+    }
+    // Sedang berjalan + kontrol tampil → sembunyikan sesudah jeda
+    // tanpa interaksi; setiap interaksi mengulang hitungan dari awal.
+    LaunchedEffect(
+        uiState.isPlaying, controlsVisible, lastInteractionAt, uiState.seekPreviewMs
+    ) {
+        if (uiState.isPlaying && controlsVisible) {
+            delay(Constants.AUTO_HIDE_CONTROLS_DELAY_MS)
+            controlsVisible = false
+        }
+    }
+
     val controlActions = PlayerControlActions(
-        onPlayPause = onPlayPauseClick,
-        onPrevious = onPreviousClick,
-        onNext = onNextClick,
-        onRotate = onRotateClick,
-        onCapture = onCaptureClick,
-        onSpeed = onSpeedClick
+        onPlayPause = { noteInteraction(); onPlayPauseClick() },
+        onPrevious = { noteInteraction(); onPreviousClick() },
+        onNext = { noteInteraction(); onNextClick() },
+        onRotate = { noteInteraction(); onRotateClick() },
+        onCapture = { noteInteraction(); onCaptureClick() },
+        onSpeed = { noteInteraction(); onSpeedClick() },
+        onMute = { noteInteraction(); onMuteClick() }
     )
     val layout = uiState.playerUiConfig.controlLayoutConfig
 
@@ -96,14 +135,18 @@ fun PlayerScreen(
         // sehingga tombol tetap menerima sentuhannya sendiri.
         GestureOverlay(
             uiState = uiState,
-            onBrightnessChange = onBrightnessChange,
-            onVolumeChange = onVolumeChange,
-            onSeekPreview = onSeekPreview,
-            onSeekCommit = onSeekCommit,
+            onBrightnessChange = { noteInteraction(); onBrightnessChange(it) },
+            onVolumeChange = { noteInteraction(); onVolumeChange(it) },
+            onSeekPreview = { noteInteraction(); onSeekPreview(it) },
+            onSeekCommit = { noteInteraction(); onSeekCommit() },
             onSeekClear = onSeekClear,
-            onSeekForward = onGestureSeekForward,
-            onSeekBackward = onGestureSeekBackward,
-            onTogglePlayPause = onTogglePlayPause,
+            onSeekForward = { noteInteraction(); onGestureSeekForward() },
+            onSeekBackward = { noteInteraction(); onGestureSeekBackward() },
+            onTogglePlayPause = { noteInteraction(); onTogglePlayPause() },
+            onSingleTap = {
+                controlsVisible = !controlsVisible
+                noteInteraction()
+            },
             modifier = Modifier.fillMaxSize()
         )
 
@@ -123,16 +166,22 @@ fun PlayerScreen(
             else -> Unit
         }
 
-        TitleDisplay(
-            title = uiState.videoTitle,
-            titleConfig = uiState.playerUiConfig.titleConfig,
-            topLeftSlot = layout.topLeftSlot,
-            topRightSlots = layout.topRightSlots,
-            uiState = uiState,
-            actions = controlActions,
-            onBackClick = onBackClick,
+        // Bar atas: meluncur ke atas keluar layar saat kontrol sembunyi.
+        AnimatedVisibility(
+            visible = controlsVisible,
+            enter = slideInVertically { -it } + fadeIn(),
+            exit = slideOutVertically { -it } + fadeOut(),
             modifier = Modifier.align(Alignment.TopCenter)
-        )
+        ) {
+            TitleDisplay(
+                title = uiState.videoTitle,
+                titleConfig = uiState.playerUiConfig.titleConfig,
+                topRightSlots = layout.topRightSlots,
+                uiState = uiState,
+                actions = controlActions,
+                onBackClick = onBackClick
+            )
+        }
 
         // Notifikasi hasil capture (perintah Veo 2026-11-04, mengganti
         // Snackbar kotak teks): lingkaran berisi centang (atau silang
@@ -167,22 +216,27 @@ fun PlayerScreen(
             }
         }
 
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
+        // Gugus bawah (seekbar + tombol): meluncur ke bawah keluar
+        // layar saat kontrol sembunyi.
+        AnimatedVisibility(
+            visible = controlsVisible,
+            enter = slideInVertically { it } + fadeIn(),
+            exit = slideOutVertically { it } + fadeOut(),
+            modifier = Modifier.align(Alignment.BottomCenter)
         ) {
-            SeekBarComponent(
-                positionMs = uiState.currentPositionMs,
-                durationMs = uiState.durationMs,
-                onSeekTo = onSeekTo,
-                previewPositionMs = uiState.seekPreviewMs
-            )
-            PlayerControls(
-                layout = layout,
-                uiState = uiState,
-                actions = controlActions
-            )
+            Column(modifier = Modifier.fillMaxWidth()) {
+                SeekBarComponent(
+                    positionMs = uiState.currentPositionMs,
+                    durationMs = uiState.durationMs,
+                    onSeekTo = { noteInteraction(); onSeekTo(it) },
+                    previewPositionMs = uiState.seekPreviewMs
+                )
+                PlayerControls(
+                    layout = layout,
+                    uiState = uiState,
+                    actions = controlActions
+                )
+            }
         }
     }
 }

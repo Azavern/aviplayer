@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.azavern.aviplayer.data.model.ControlLayoutConfig
 import com.azavern.aviplayer.data.model.ControlSlot
 import com.azavern.aviplayer.data.model.FolderVisibilityConfig
+import com.azavern.aviplayer.data.model.SeekConfig
 import com.azavern.aviplayer.data.model.ThemeConfig
 import com.azavern.aviplayer.data.model.TitleConfig
 import com.azavern.aviplayer.data.repository.FolderRepository
@@ -29,9 +30,12 @@ class CustomizationViewModel @Inject constructor(
     private val folderRepository: FolderRepository
 ) : ViewModel() {
 
-    /** Alamat satu posisi slot di ControlLayoutConfig. */
+    /**
+     * Alamat satu posisi slot di ControlLayoutConfig. Area kiri atas
+     * TIDAK punya posisi di sini: area itu terkunci (tombol kembali
+     * + judul tetap) dan tidak bisa ditukar dari editor.
+     */
     sealed class SlotPosition {
-        data object TopLeft : SlotPosition()
         data class TopRight(val index: Int) : SlotPosition()
         data class Center(val index: Int) : SlotPosition()
         data class BottomLeft(val index: Int) : SlotPosition()
@@ -48,6 +52,7 @@ class CustomizationViewModel @Inject constructor(
                     it.copy(
                         titleConfig = config.titleConfig,
                         controlLayoutConfig = config.controlLayoutConfig,
+                        seekConfig = config.seekConfig,
                         themeConfig = config.themeConfig,
                         isLoading = false
                     )
@@ -89,6 +94,11 @@ class CustomizationViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.updateControlLayoutConfig(config) }
     }
 
+    /** Perubahan durasi lewati double-tap dari tab Tombol. */
+    fun onSeekConfigChanged(config: SeekConfig) {
+        viewModelScope.launch { settingsRepository.updateSeekConfig(config) }
+    }
+
     fun onResetControlLayout() {
         _uiState.update { it.copy(selectedSlotA = null) }
         viewModelScope.launch { settingsRepository.resetControlLayoutToDefault() }
@@ -127,7 +137,6 @@ class CustomizationViewModel @Inject constructor(
         /** Isi slot di posisi; indeks di luar daftar dianggap EMPTY. */
         fun slotAt(config: ControlLayoutConfig, position: SlotPosition): ControlSlot =
             when (position) {
-                SlotPosition.TopLeft -> config.topLeftSlot
                 is SlotPosition.TopRight ->
                     config.topRightSlots.getOrElse(position.index) { ControlSlot.EMPTY }
                 is SlotPosition.Center ->
@@ -144,7 +153,6 @@ class CustomizationViewModel @Inject constructor(
             position: SlotPosition,
             slot: ControlSlot
         ): ControlLayoutConfig = when (position) {
-            SlotPosition.TopLeft -> config.copy(topLeftSlot = slot)
             is SlotPosition.TopRight ->
                 config.copy(topRightSlots = config.topRightSlots.setAt(position.index, slot))
             is SlotPosition.Center ->

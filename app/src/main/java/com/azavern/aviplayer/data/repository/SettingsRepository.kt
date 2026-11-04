@@ -6,6 +6,7 @@ import com.azavern.aviplayer.data.model.FolderVisibilityConfig
 import com.azavern.aviplayer.data.model.SortConfig
 import com.azavern.aviplayer.data.model.SortField
 import com.azavern.aviplayer.data.model.PlayerUiConfig
+import com.azavern.aviplayer.data.model.SeekConfig
 import com.azavern.aviplayer.data.model.ThemeConfig
 import com.azavern.aviplayer.data.model.ThemeMode
 import com.azavern.aviplayer.data.model.TitleConfig
@@ -81,7 +82,12 @@ class SettingsRepository @Inject constructor(
         preferenceDataSource.setTitleMarquee(config.marqueeEnabled)
     }
 
-    /** Layout kontrol player dari JSON; JSON rusak/kosong → Default. */
+    /**
+     * Layout kontrol player dari JSON; JSON rusak/kosong → Default.
+     * Hasil selalu lewat [ControlLayoutConfig.sanitized]: area kiri
+     * atas terkunci (perintah Veo), tombol yang terlanjur tersimpan
+     * di sana dipindah ke kanan bawah.
+     */
     fun getControlLayoutConfig(): Flow<ControlLayoutConfig> =
         preferenceDataSource.getControlLayoutJson().map { json ->
             if (json.isNullOrBlank()) {
@@ -90,7 +96,7 @@ class SettingsRepository @Inject constructor(
                 runCatching {
                     layoutJson.decodeFromString<ControlLayoutConfig>(json)
                 }.getOrDefault(ControlLayoutConfig.Default)
-            }
+            }.sanitized()
         }
 
     suspend fun updateControlLayoutConfig(config: ControlLayoutConfig) {
@@ -151,16 +157,40 @@ class SettingsRepository @Inject constructor(
         preferenceDataSource.setSortAscending(config.ascending)
     }
 
+    // ---- Durasi lewati double-tap (maju/mundur terpisah) ----
+
+    /** Durasi lewati dari DataStore; nilai di luar pilihan → 10 detik. */
+    fun getSeekConfig(): Flow<SeekConfig> = combine(
+        preferenceDataSource.getSeekForwardSeconds(),
+        preferenceDataSource.getSeekBackwardSeconds()
+    ) { forward, backward ->
+        SeekConfig(
+            forwardSeconds = SeekConfig.sanitize(forward),
+            backwardSeconds = SeekConfig.sanitize(backward)
+        )
+    }
+
+    suspend fun updateSeekConfig(config: SeekConfig) {
+        preferenceDataSource.setSeekForwardSeconds(
+            SeekConfig.sanitize(config.forwardSeconds)
+        )
+        preferenceDataSource.setSeekBackwardSeconds(
+            SeekConfig.sanitize(config.backwardSeconds)
+        )
+    }
+
     /** Semua konfigurasi tampilan player dalam satu Flow. */
     fun getPlayerUiConfig(): Flow<PlayerUiConfig> = combine(
         getTitleConfig(),
         getControlLayoutConfig(),
-        getThemeConfig()
-    ) { titleConfig, controlLayoutConfig, themeConfig ->
+        getThemeConfig(),
+        getSeekConfig()
+    ) { titleConfig, controlLayoutConfig, themeConfig, seekConfig ->
         PlayerUiConfig(
             titleConfig = titleConfig,
             controlLayoutConfig = controlLayoutConfig,
-            themeConfig = themeConfig
+            themeConfig = themeConfig,
+            seekConfig = seekConfig
         )
     }
 }

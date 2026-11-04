@@ -139,6 +139,26 @@ class PreferenceDataSource @Inject constructor(
         dataStore.edit { it[KEY_SORT_ASCENDING] = ascending }
     }
 
+    // ---- Durasi lewati double-tap (maju/mundur terpisah) ----
+
+    /** Detik lewati maju; bawaan 10. */
+    fun getSeekForwardSeconds(): Flow<Int> = dataStore.data.map { prefs ->
+        prefs[KEY_SEEK_FORWARD_SECONDS] ?: 10
+    }
+
+    suspend fun setSeekForwardSeconds(seconds: Int) {
+        dataStore.edit { it[KEY_SEEK_FORWARD_SECONDS] = seconds }
+    }
+
+    /** Detik lewati mundur; bawaan 10. */
+    fun getSeekBackwardSeconds(): Flow<Int> = dataStore.data.map { prefs ->
+        prefs[KEY_SEEK_BACKWARD_SECONDS] ?: 10
+    }
+
+    suspend fun setSeekBackwardSeconds(seconds: Int) {
+        dataStore.edit { it[KEY_SEEK_BACKWARD_SECONDS] = seconds }
+    }
+
     // ---- Layout kontrol player (Milestone 7) ----
 
     /** JSON ControlLayoutConfig; null = belum pernah disimpan. */
@@ -173,5 +193,7 @@ class PreferenceDataSource @Inject constructor(
         val KEY_TITLE_FONT_SIZE = floatPreferencesKey(Constants.PREF_TITLE_FONT_SIZE)
         val KEY_TITLE_MAX_LINES = intPreferencesKey(Constants.PREF_TITLE_MAX_LINES)
         val KEY_SEEK_STEP_MS = intPreferencesKey(Constants.PREF_SEEK_STEP_MS)
+        val KEY_SEEK_FORWARD_SECONDS = intPreferencesKey(Constants.PREF_SEEK_FORWARD_SECONDS)
+        val KEY_SEEK_BACKWARD_SECONDS = intPreferencesKey(Constants.PREF_SEEK_BACKWARD_SECONDS)
     }
 }

@@ -9,7 +9,9 @@ package com.azavern.aviplayer.data.model
 data class PlayerUiConfig(
     val titleConfig: TitleConfig = TitleConfig.Default,
     val controlLayoutConfig: ControlLayoutConfig = ControlLayoutConfig.Default,
-    val themeConfig: ThemeConfig = ThemeConfig.Default
+    val themeConfig: ThemeConfig = ThemeConfig.Default,
+    /** Durasi lewati double-tap, maju & mundur terpisah. */
+    val seekConfig: SeekConfig = SeekConfig.Default
 ) {
     companion object {
         val Default = PlayerUiConfig()

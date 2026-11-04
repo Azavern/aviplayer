@@ -91,7 +91,9 @@ fun CustomizationScreen(
                         layout = uiState.controlLayoutConfig,
                         selectedSlotA = uiState.selectedSlotA,
                         onSlotTapped = viewModel::onSlotTapped,
-                        onResetLayout = viewModel::onResetControlLayout
+                        onResetLayout = viewModel::onResetControlLayout,
+                        seekConfig = uiState.seekConfig,
+                        onSeekConfigChanged = viewModel::onSeekConfigChanged
                     )
                     CustomizationTab.THEME -> ThemeEditor(
                         themeConfig = uiState.themeConfig,

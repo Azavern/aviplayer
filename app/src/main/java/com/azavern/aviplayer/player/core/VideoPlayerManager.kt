@@ -73,6 +73,17 @@ class VideoPlayerManager(private val context: Context) {
         exoPlayer?.setPlaybackSpeed(speed)
     }
 
+    /**
+     * Bisu di level player: volume ExoPlayer 0 (atau kembali ke 1).
+     * Ini terpisah dari volume sistem yang diatur gesture — membisu
+     * tidak mengubah volume HP, dan melepas bisu mengembalikan
+     * volume player penuh. Wajib diterapkan ulang sesudah [prepare]
+     * karena instance ExoPlayer bisa dibuat ulang dari nol.
+     */
+    fun setMuted(muted: Boolean) {
+        exoPlayer?.volume = if (muted) 0f else 1f
+    }
+
     fun getCurrentPosition(): Long = exoPlayer?.currentPosition ?: 0L
 
     /** Durasi total; bisa `C.TIME_UNSET` sebelum player siap — pemanggil wajib menormalisasi. */

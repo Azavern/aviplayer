@@ -84,7 +84,15 @@
     <string name="slot_capture">Tangkap Frame</string>
     <string name="slot_speed">Kecepatan</string>
     <string name="slot_screen_ratio">Rasio Layar</string>
+    <string name="slot_mute">Bisu</string>
     <string name="slot_empty">Kosong</string>
+    <string name="player_action_mute">Bisu</string>
+    <string name="player_action_unmute">Bunyikan</string>
+    <string name="controls_editor_top_left_locked">Area kiri atas (tombol kembali dan judul) terkunci — selalu tetap dan tidak bisa ditukar.</string>
+    <string name="controls_seek_title">Durasi Lewati (Double Tap)</string>
+    <string name="controls_seek_forward">Maju</string>
+    <string name="controls_seek_backward">Mundur</string>
+    <string name="seek_option_seconds">%1$d dtk</string>
     <string name="player_action_back">Kembali</string>
     <string name="milestone_marker">Milestone 4</string>
 

@@ -35,6 +35,8 @@ data class PlayerUiState(
     val themeConfig: ThemeConfig = ThemeConfig.Default,
     /** Kecepatan putar aktif (tombol "1.0×" di bar kontrol bawah). */
     val playbackSpeed: Float = 1.0f,
+    /** Player sedang dibisukan lewat tombol bisu (volume player 0). */
+    val isMuted: Boolean = false,
     /** Level kecerahan jendela 0f..1f; -1f = ikuti sistem (Milestone 5). */
     val brightnessLevel: Float = -1f,
     /**

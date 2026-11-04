@@ -35,7 +35,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.azavern.aviplayer.R
-import com.azavern.aviplayer.data.model.ControlSlot
 import com.azavern.aviplayer.data.model.TitleConfig
 import com.azavern.aviplayer.ui.player.PlayerUiState
 import com.azavern.aviplayer.ui.player.components.PlayerControlActions
@@ -194,10 +193,9 @@ fun TitleStyleEditor(
             TitleDisplay(
                 title = stringResource(R.string.title_editor_preview_sample),
                 titleConfig = titleConfig,
-                topLeftSlot = ControlSlot.EMPTY,
                 topRightSlots = emptyList(),
                 uiState = PlayerUiState(),
-                actions = PlayerControlActions({}, {}, {}, {}, {}, {}),
+                actions = PlayerControlActions({}, {}, {}, {}, {}, {}, {}),
                 onBackClick = {}
             )
         }

@@ -115,7 +115,8 @@ class PlayerActivity : ComponentActivity() {
                     onGestureSeekBackward = viewModel::seekBackward,
                     onTogglePlayPause = viewModel::togglePlayPause,
                     onCaptureClick = viewModel::captureFrame,
-                    onCaptureResultConsumed = viewModel::onCaptureResultConsumed
+                    onCaptureResultConsumed = viewModel::onCaptureResultConsumed,
+                    onMuteClick = viewModel::toggleMute
                 )
             }
         }
