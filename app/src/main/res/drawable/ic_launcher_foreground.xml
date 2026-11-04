@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Foreground ikon launcher: artwork AviPlay dari Veo (2026-11-04),
+  digambar ulang sebagai vector dari path SVG aslinya (sumber yang
+  sama dengan animasi splash) supaya bisa masuk repo sebagai teks.
+  Grup diskalakan 0.78 di sekitar pusat logo demi zona aman ikon
+  adaptif; latar hitam datang dari background adaptive-icon.
+  Lapisan mengambang (sweep, ring, glow ambient) tidak termasuk —
+  itu bagian animasi splash, bukan ikon statis.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="1254"
+    android:viewportHeight="1254">
+
+    <group
+        android:pivotX="627"
+        android:pivotY="617"
+        android:scaleX="0.78"
+        android:scaleY="0.78">
+
+        <!-- Lingkaran dasar + lapisan cahaya di dalamnya -->
+        <path android:pathData="M627,47 m-570,0 a570,570 0 1,0 1140,0 a570,570 0 1,0 -1140,0">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:type="linear"
+                    android:startX="171"
+                    android:startY="104"
+                    android:endX="1083"
+                    android:endY="1130">
+                    <item android:offset="0" android:color="#00B8FF" />
+                    <item android:offset="0.34" android:color="#1B45FF" />
+                    <item android:offset="0.72" android:color="#4A00F0" />
+                    <item android:offset="1" android:color="#6A00EE" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <path android:pathData="M627,47 m-570,0 a570,570 0 1,0 1140,0 a570,570 0 1,0 -1140,0">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:type="radial"
+                    android:centerX="103"
+                    android:centerY="777"
+                    android:gradientRadius="570">
+                    <item android:offset="0" android:color="#F20A3CFF" />
+                    <item android:offset="1" android:color="#000A3CFF" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <path android:pathData="M627,47 m-570,0 a570,570 0 1,0 1140,0 a570,570 0 1,0 -1140,0">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:type="radial"
+                    android:centerX="1060"
+                    android:centerY="1096"
+                    android:gradientRadius="627">
+                    <item android:offset="0" android:color="#E016FF" />
+                    <item android:offset="0.55" android:color="#4DE016FF" />
+                    <item android:offset="1" android:color="#00E016FF" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <path android:pathData="M627,47 m-570,0 a570,570 0 1,0 1140,0 a570,570 0 1,0 -1140,0">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:type="radial"
+                    android:centerX="627"
+                    android:centerY="685"
+                    android:gradientRadius="593">
+                    <item android:offset="0" android:color="#F208005C" />
+                    <item android:offset="0.55" android:color="#8008005C" />
+                    <item android:offset="1" android:color="#0008005C" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <!-- Rim tipis di tepi lingkaran -->
+        <path
+            android:pathData="M627,50 m-567,0 a567,567 0 1,0 1134,0 a567,567 0 1,0 -1134,0"
+            android:fillColor="#00000000"
+            android:strokeWidth="3">
+            <aapt:attr name="android:strokeColor">
+                <gradient
+                    android:type="linear"
+                    android:startX="60"
+                    android:startY="50"
+                    android:endX="1194"
+                    android:endY="1184">
+                    <item android:offset="0" android:color="#8CFFFFFF" />
+                    <item android:offset="0.5" android:color="#0AFFFFFF" />
+                    <item android:offset="1" android:color="#59FF9BFF" />
+                </gradient>
+            </aapt:attr>
+        </path>
+
+        <!-- Segitiga play (terpotong lingkaran; clip dibatasi grup ini) -->
+        <group>
+            <clip-path android:pathData="M627,47 m-570,0 a570,570 0 1,0 1140,0 a570,570 0 1,0 -1140,0" />
+            <path android:pathData="M343,320 Q343,190 444,244 L1076,580 Q1147,617 1076,655 L444,990 Q343,1044 343,914 Z">
+                <aapt:attr name="android:fillColor">
+                    <gradient
+                        android:type="linear"
+                        android:startX="343"
+                        android:startY="306"
+                        android:endX="1107"
+                        android:endY="617">
+                        <item android:offset="0" android:color="#F22CC2FF" />
+                        <item android:offset="0.22" android:color="#B83C58FF" />
+                        <item android:offset="0.6" android:color="#611A0098" />
+                        <item android:offset="1" android:color="#1F5000C8" />
+                    </gradient>
+                </aapt:attr>
+            </path>
+            <path android:pathData="M343,320 Q343,190 444,244 L1076,580 Q1147,617 1076,655 L444,990 Q343,1044 343,914 Z">
+                <aapt:attr name="android:fillColor">
+                    <gradient
+                        android:type="linear"
+                        android:startX="343"
+                        android:startY="1007"
+                        android:endX="801"
+                        android:endY="384">
+                        <item android:offset="0" android:color="#D97A66FF" />
+                        <item android:offset="0.5" android:color="#405A3CFF" />
+                        <item android:offset="1" android:color="#005A3CFF" />
+                    </gradient>
+                </aapt:attr>
+            </path>
+        </group>
+
+        <!-- Halo lembut di belakang teks (alpha final 0.28 dibakar ke stop) -->
+        <path android:pathData="M640,430 m-600,0 a600,190 0 1,0 1200,0 a600,190 0 1,0 -1200,0">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:type="radial"
+                    android:centerX="640"
+                    android:centerY="620"
+                    android:gradientRadius="600">
+                    <item android:offset="0" android:color="#27C9B8FF" />
+                    <item android:offset="0.6" android:color="#0D7A4CFF" />
+                    <item android:offset="1" android:color="#007A4CFF" />
+                </gradient>
+            </aapt:attr>
+        </path>
+
+        <!-- Huruf A: lubang play dulu, lalu badan A (evenOdd melubanginya) -->
+        <path android:pathData="M243,567 L313,608 Q324,614 313,621 L250,661 Q237,667 237,652 L237,578 Q237,571 243,567Z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:type="linear"
+                    android:startX="237"
+                    android:startY="567"
+                    android:endX="324"
+                    android:endY="667">
+                    <item android:offset="0" android:color="#2A10E6" />
+                    <item android:offset="1" android:color="#7A3CFF" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <path
+            android:pathData="M128,706 L228,497 Q270,440 312,497 L405,700 Q410,712 398,712 L356,712 Q346,712 342,703 L336,692 Q331,682 318,682 L224,682 Q210,682 206,692 L200,703 Q196,712 186,712 L136,712 Q124,712 128,706 Z M243,567 L313,608 Q324,614 313,621 L250,661 Q237,667 237,652 L237,578 Q237,571 243,567Z"
+            android:fillColor="#FFFFFF"
+            android:pathFillType="evenOdd" />
+        <path
+            android:pathData="M363,553 Q362,543 374,543 L406,543 Q417,543 421,553 L446,620 L475,553 Q479,543 490,543 L514,543 Q526,543 522,555 L474,688 Q470,700 458,700 L430,700 Q418,700 414,688 Z"
+            android:fillColor="#FFFFFF" />
+        <path
+            android:pathData="M540,543 L568,543 Q577,543 577,552 L577,691 Q577,700 568,700 L540,700 Q531,700 531,691 L531,552 Q531,543 540,543 Z"
+            android:fillColor="#FFFFFF" />
+        <path
+            android:pathData="M554,479 m-27,0 a27,27 0 1,0 54,0 a27,27 0 1,0 -54,0"
+            android:fillColor="#FFFFFF" />
+
+        <!-- Huruf Play: gradasi lavender -->
+        <path
+            android:pathData="M616,485 L735,485 Q780,485 780,555 Q780,625 735,625 L657,625 L657,690 Q657,698 649,698 L616,698 Q608,698 608,690 L608,493 Q608,485 616,485 Z M657,521 L718,521 Q728,521 728,555 Q728,589 718,589 L657,589 Z"
+            android:pathFillType="evenOdd">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:type="linear"
+                    android:startX="0"
+                    android:startY="480"
+                    android:endX="0"
+                    android:endY="770">
+                    <item android:offset="0" android:color="#EEE8FF" />
+                    <item android:offset="1" android:color="#C682FF" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <path android:pathData="M800,485 L829,485 Q838,485 838,494 L838,689 Q838,698 829,698 L800,698 Q791,698 791,689 L791,494 Q791,485 800,485 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:type="linear"
+                    android:startX="0"
+                    android:startY="480"
+                    android:endX="0"
+                    android:endY="770">
+                    <item android:offset="0" android:color="#EEE8FF" />
+                    <item android:offset="1" android:color="#C682FF" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <path
+            android:pathData="M872,562 Q905,543 950,543 Q1000,543 1000,595 L1000,690 Q1000,698 992,698 L962,698 Q954,698 952,690 L950,682 Q925,702 895,702 Q852,700 852,655 Q852,610 905,603 L950,598 Q950,580 920,580 Q895,580 880,592 Q866,592 872,562 Z M898,648 Q898,632 925,630 L950,630 L950,655 Q935,668 915,668 Q898,668 898,648 Z"
+            android:pathFillType="evenOdd">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:type="linear"
+                    android:startX="0"
+                    android:startY="480"
+                    android:endX="0"
+                    android:endY="770">
+                    <item android:offset="0" android:color="#EEE8FF" />
+                    <item android:offset="1" android:color="#C682FF" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <path android:pathData="M1005,550 Q1005,543 1013,543 L1040,543 Q1047,543 1050,550 L1078,625 L1105,553 Q1108,543 1118,543 L1143,543 Q1153,543 1150,553 L1090,712 Q1070,760 1030,763 Q1000,763 996,755 L1000,735 Q1000,727 1010,727 Q1030,727 1042,700 L1046,690 L1007,560 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:type="linear"
+                    android:startX="0"
+                    android:startY="480"
+                    android:endX="0"
+                    android:endY="770">
+                    <item android:offset="0" android:color="#EEE8FF" />
+                    <item android:offset="1" android:color="#C682FF" />
+                </gradient>
+            </aapt:attr>
+        </path>
+    </group>
+</vector>
