@@ -18,8 +18,8 @@
     <group
         android:pivotX="627"
         android:pivotY="617"
-        android:scaleX="0.78"
-        android:scaleY="0.78">
+        android:scaleX="0.60"
+        android:scaleY="0.60">
 
         <!-- Lingkaran dasar + lapisan cahaya di dalamnya -->
         <path android:pathData="M627,47 m-570,0 a570,570 0 1,0 1140,0 a570,570 0 1,0 -1140,0">
