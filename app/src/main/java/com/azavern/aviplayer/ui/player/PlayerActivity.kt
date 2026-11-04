@@ -64,10 +64,15 @@ class PlayerActivity : ComponentActivity() {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             AppTheme(themeConfig = uiState.themeConfig) {
                 // Orientasi adalah state runtime (Bagian 10F): terapkan setiap berubah.
+                // Mode sensor (bukan FULL_USER) supaya arah layar membaca
+                // gerak perangkat terlepas dari kunci rotasi HP: mode
+                // LANDSCAPE membalik antara landscape normal dan reverse
+                // landscape mengikuti pegangan (kepala HP di kiri/kanan).
                 LaunchedEffect(uiState.orientationMode) {
                     requestedOrientation = when (uiState.orientationMode) {
-                        OrientationMode.AUTO -> ActivityInfo.SCREEN_ORIENTATION_FULL_USER
-                        OrientationMode.LANDSCAPE -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                        OrientationMode.AUTO -> ActivityInfo.SCREEN_ORIENTATION_SENSOR
+                        OrientationMode.LANDSCAPE ->
+                            ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
                         OrientationMode.PORTRAIT -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
                     }
                 }
