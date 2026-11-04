@@ -1,5 +1,6 @@
 package com.azavern.aviplayer.ui.home
 
+import android.content.IntentSender
 import com.azavern.aviplayer.data.model.FolderItem
 import com.azavern.aviplayer.data.model.PlaylistEntry
 import com.azavern.aviplayer.data.model.PlaylistInfo
@@ -41,10 +42,41 @@ data class HomeUiState(
     /** Urutan daftar video yang sedang berlaku (sorting global). */
     val sortConfig: SortConfig = SortConfig.Default,
     /** Sedang memuat ulang daftar (tarik-untuk-segarkan / tombol refresh). */
-    val isRefreshing: Boolean = false
+    val isRefreshing: Boolean = false,
+    /** Dialog aksi file dari menu titik-tiga video yang sedang terbuka. */
+    val pendingFileAction: PendingFileAction? = null,
+    /**
+     * Dialog persetujuan sistem yang harus ditampilkan untuk operasi
+     * tulis MediaStore (ganti nama / hapus file milik aplikasi lain).
+     * Event sekali-jalan: HomeScreen meluncurkannya lalu membersihkan
+     * lewat HomeViewModel.onConsentLaunched.
+     */
+    val consentIntentSender: IntentSender? = null,
+    /** Mode seleksi banyak video aktif (tekan-tahan / menu "Pilih"). */
+    val selectionMode: Boolean = false,
+    /**
+     * Id video terpilih, terurut sesuai urutan memilih — nomor pada
+     * lingkaran pilihan = indeks di daftar ini + 1.
+     */
+    val selectedVideoIds: List<String> = emptyList(),
+    /** Dialog pemilih playlist dibuka untuk seluruh pilihan (batch). */
+    val playlistPickerForSelection: Boolean = false,
+    /** Dialog ringkasan info untuk pilihan banyak file sedang tampil. */
+    val showSelectionInfo: Boolean = false,
+    /** Dialog konfirmasi hapus untuk seluruh pilihan sedang tampil. */
+    val showDeleteSelectionConfirm: Boolean = false
 )
 
 enum class HomeTab { VIDEO, FOLDER, PLAYLIST }
+
+/** Aksi file dari menu titik-tiga video yang menunggu dialognya tampil. */
+sealed class PendingFileAction {
+    abstract val video: VideoItem
+
+    data class Rename(override val video: VideoItem) : PendingFileAction()
+    data class Info(override val video: VideoItem) : PendingFileAction()
+    data class Delete(override val video: VideoItem) : PendingFileAction()
+}
 
 sealed class HomeNavigation {
     /**

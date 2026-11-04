@@ -1,13 +1,28 @@
 package com.azavern.aviplayer.ui.home.components
 
+import android.app.Activity
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.PlaylistAdd
+import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.outlined.VideoLibrary
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Refresh
@@ -18,6 +33,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
@@ -30,6 +46,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -38,6 +55,7 @@ import com.azavern.aviplayer.R
 import com.azavern.aviplayer.ui.home.HomeNavigation
 import com.azavern.aviplayer.ui.home.HomeTab
 import com.azavern.aviplayer.ui.home.HomeViewModel
+import com.azavern.aviplayer.ui.home.PendingFileAction
 import kotlinx.coroutines.launch
 
 /**
@@ -66,6 +84,21 @@ fun HomeScreen(
         }
     }
 
+    // Dialog persetujuan sistem untuk ganti nama / hapus file milik
+    // aplikasi lain (MediaStore): diluncurkan saat ViewModel meminta,
+    // hasilnya menentukan operasi yang menunggu dijalankan ulang.
+    val consentLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        viewModel.onConsentResult(result.resultCode == Activity.RESULT_OK)
+    }
+    LaunchedEffect(uiState.consentIntentSender) {
+        uiState.consentIntentSender?.let { sender ->
+            consentLauncher.launch(IntentSenderRequest.Builder(sender).build())
+            viewModel.onConsentLaunched()
+        }
+    }
+
     // State daftar video di-hoist ke sini supaya FAB "kembali ke atas"
     // bisa mengendalikan daftar yang sama (permintaan Veo 2026-11-04:
     // posisi daftar suka nyangkut di bawah saat pencarian).
@@ -75,44 +108,95 @@ fun HomeScreen(
         derivedStateOf { videoListState.firstVisibleItemIndex > 2 }
     }
 
+    // Tombol kembali sistem keluar dari mode seleksi lebih dulu.
+    BackHandler(enabled = uiState.selectionMode) {
+        viewModel.exitSelectionMode()
+    }
+
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.app_name)) },
-                actions = {
-                    if (uiState.hasPermission) {
-                        IconButton(onClick = viewModel::refresh) {
+            if (uiState.selectionMode) {
+                // Bar mode seleksi (referensi Veo): X | "Terpilih n/total" | pilih semua.
+                TopAppBar(
+                    title = {
+                        Text(
+                            stringResource(
+                                R.string.home_selection_title,
+                                uiState.selectedVideoIds.size,
+                                uiState.videos.size
+                            )
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = viewModel::exitSelectionMode) {
                             Icon(
-                                imageVector = Icons.Rounded.Refresh,
-                                contentDescription = stringResource(R.string.home_refresh)
+                                imageVector = Icons.Filled.Close,
+                                contentDescription = stringResource(
+                                    R.string.home_selection_close
+                                )
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = viewModel::onSelectAllClicked) {
+                            Icon(
+                                imageVector = Icons.Filled.SelectAll,
+                                contentDescription = stringResource(
+                                    R.string.home_selection_select_all
+                                )
                             )
                         }
                     }
-                    IconButton(onClick = onNavigateToCustomization) {
-                        Icon(
-                            imageVector = Icons.Rounded.Tune,
-                            contentDescription = stringResource(R.string.customization_title)
-                        )
+                )
+            } else {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.app_name)) },
+                    actions = {
+                        if (uiState.hasPermission) {
+                            IconButton(onClick = viewModel::refresh) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Refresh,
+                                    contentDescription = stringResource(R.string.home_refresh)
+                                )
+                            }
+                        }
+                        IconButton(onClick = onNavigateToCustomization) {
+                            Icon(
+                                imageVector = Icons.Rounded.Tune,
+                                contentDescription = stringResource(R.string.customization_title)
+                            )
+                        }
                     }
-                }
-            )
+                )
+            }
         },
         bottomBar = {
-            Column {
-                if (uiState.hasPermission && !uiState.miniBarDismissed &&
-                    uiState.lastPlayedPath != null
-                ) {
-                    MiniPlayerBar(
-                        title = uiState.lastPlayedTitle.orEmpty(),
-                        thumbnailPath = uiState.lastPlayedPath,
-                        onPlayClick = viewModel::onMiniPlayerClicked,
-                        onDismiss = viewModel::onMiniBarDismissed
+            if (uiState.selectionMode) {
+                SelectionActionBar(
+                    selectedCount = uiState.selectedVideoIds.size,
+                    onPlay = viewModel::playSelection,
+                    onAddToPlaylist = viewModel::onAddSelectionToPlaylistRequested,
+                    onRename = viewModel::onRenameSelectionRequested,
+                    onInfo = viewModel::onSelectionInfoRequested,
+                    onDelete = viewModel::onDeleteSelectionRequested
+                )
+            } else {
+                Column {
+                    if (uiState.hasPermission && !uiState.miniBarDismissed &&
+                        uiState.lastPlayedPath != null
+                    ) {
+                        MiniPlayerBar(
+                            title = uiState.lastPlayedTitle.orEmpty(),
+                            thumbnailPath = uiState.lastPlayedPath,
+                            onPlayClick = viewModel::onMiniPlayerClicked,
+                            onDismiss = viewModel::onMiniBarDismissed
+                        )
+                    }
+                    BottomNavBar(
+                        activeTab = uiState.activeTab,
+                        onTabSelected = viewModel::onTabSelected
                     )
                 }
-                BottomNavBar(
-                    activeTab = uiState.activeTab,
-                    onTabSelected = viewModel::onTabSelected
-                )
             }
         }
     ) { innerPadding ->
@@ -146,8 +230,16 @@ fun HomeScreen(
                                 playbackPositions = uiState.playbackPositions,
                                 lastPlayedVideoId = uiState.lastPlayedVideoId,
                                 onVideoClick = viewModel::onVideoClicked,
+                                onPlayClick = viewModel::onPlayMenuClicked,
+                                onLongPress = viewModel::onVideoLongPressed,
                                 onCloseFolder = viewModel::onCloseFolder,
                                 onAddToPlaylistClick = viewModel::onAddToPlaylistRequested,
+                                onSelectClick = viewModel::onSelectVideoRequested,
+                                onRenameClick = viewModel::onRenameVideoRequested,
+                                onInfoClick = viewModel::onFileInfoRequested,
+                                onDeleteClick = viewModel::onDeleteVideoRequested,
+                                selectionMode = uiState.selectionMode,
+                                selectedVideoIds = uiState.selectedVideoIds,
                                 listState = videoListState
                             )
                         }
@@ -199,7 +291,7 @@ fun HomeScreen(
             // innerPadding, jadi FAB otomatis bertengger tepat di atas
             // bar mini / navigasi bawah.
             if (uiState.hasPermission && uiState.activeTab == HomeTab.VIDEO &&
-                showScrollTopButton
+                !uiState.selectionMode && showScrollTopButton
             ) {
                 SmallFloatingActionButton(
                     onClick = {
@@ -229,6 +321,146 @@ fun HomeScreen(
                 onDismiss = viewModel::onAddToPlaylistDismissed
             )
         }
+
+        // Dialog pemilih playlist untuk seluruh pilihan (mode seleksi).
+        if (uiState.playlistPickerForSelection) {
+            PlaylistPickerDialog(
+                videoTitle = stringResource(
+                    R.string.playlist_video_count, uiState.selectedVideoIds.size
+                ),
+                playlists = uiState.playlists,
+                onPick = viewModel::addSelectionToPlaylist,
+                onCreateAndPick = viewModel::createPlaylistAndAddSelection,
+                onDismiss = viewModel::onSelectionPlaylistPickerDismissed
+            )
+        }
+
+        // Ringkasan info untuk pilihan banyak file.
+        if (uiState.showSelectionInfo) {
+            SelectionInfoDialog(
+                videos = uiState.videos.filter { it.id in uiState.selectedVideoIds },
+                onDismiss = viewModel::onSelectionInfoDismissed
+            )
+        }
+
+        // Konfirmasi hapus untuk seluruh pilihan.
+        if (uiState.showDeleteSelectionConfirm) {
+            DeleteSelectionDialog(
+                count = uiState.selectedVideoIds.size,
+                onConfirm = viewModel::confirmDeleteSelection,
+                onDismiss = viewModel::onDeleteSelectionDismissed
+            )
+        }
+
+        // Dialog aksi file dari menu titik-tiga video.
+        when (val action = uiState.pendingFileAction) {
+            is PendingFileAction.Rename -> RenameVideoDialog(
+                video = action.video,
+                onConfirm = viewModel::confirmRenameVideo,
+                onDismiss = viewModel::onFileActionDismissed
+            )
+            is PendingFileAction.Info -> FileInfoDialog(
+                video = action.video,
+                onDismiss = viewModel::onFileActionDismissed
+            )
+            is PendingFileAction.Delete -> DeleteVideoDialog(
+                video = action.video,
+                onConfirm = viewModel::confirmDeleteVideo,
+                onDismiss = viewModel::onFileActionDismissed
+            )
+            null -> Unit
+        }
+    }
+}
+
+/**
+ * Bar aksi bawah mode seleksi (referensi Veo): lima aksi yang sama
+ * dengan menu titik-tiga — Putar, Playlist, Ganti Nama, Info, Hapus.
+ * Ganti Nama hanya aktif bila tepat satu video terpilih; label Hapus
+ * membawa jumlah pilihan.
+ */
+@Composable
+private fun SelectionActionBar(
+    selectedCount: Int,
+    onPlay: () -> Unit,
+    onAddToPlaylist: () -> Unit,
+    onRename: () -> Unit,
+    onInfo: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Surface(tonalElevation = 3.dp) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            SelectionAction(
+                icon = Icons.Filled.PlayArrow,
+                label = stringResource(R.string.home_selection_play),
+                enabled = selectedCount > 0,
+                onClick = onPlay
+            )
+            SelectionAction(
+                icon = Icons.Filled.PlaylistAdd,
+                label = stringResource(R.string.playlist_add_to),
+                enabled = selectedCount > 0,
+                onClick = onAddToPlaylist
+            )
+            SelectionAction(
+                icon = Icons.Filled.Edit,
+                label = stringResource(R.string.home_action_rename),
+                enabled = selectedCount == 1,
+                onClick = onRename
+            )
+            SelectionAction(
+                icon = Icons.Filled.Info,
+                label = stringResource(R.string.home_action_info),
+                enabled = selectedCount > 0,
+                onClick = onInfo
+            )
+            SelectionAction(
+                icon = Icons.Filled.Delete,
+                label = stringResource(R.string.home_selection_delete, selectedCount),
+                enabled = selectedCount > 0,
+                onClick = onDelete,
+                danger = true
+            )
+        }
+    }
+}
+
+@Composable
+private fun SelectionAction(
+    icon: ImageVector,
+    label: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    danger: Boolean = false
+) {
+    val activeColor = if (danger) {
+        MaterialTheme.colorScheme.error
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
+    val color = if (enabled) {
+        activeColor
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)
+    }
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 4.dp)
+    ) {
+        Icon(icon, contentDescription = null, tint = color)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = color,
+            maxLines = 1
+        )
     }
 }
 

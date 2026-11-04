@@ -1,16 +1,21 @@
 package com.azavern.aviplayer.ui.home.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
@@ -53,25 +58,85 @@ import com.azavern.aviplayer.utils.TimeUtils
  *   [bar progres tipis di tepi bawah thumbnail bila sudah ditonton sebagian]
  *
  * Thumbnail diambil Coil dari frame video itu sendiri (VideoFrameDecoder).
+ *
+ * Tekan-tahan di mana pun pada baris ini (kecuali tombol titik-tiga)
+ * masuk ke mode seleksi banyak video; di mode itu baris menampilkan
+ * lingkaran di kiri — terisi warna aksen + nomor urut memilih bila
+ * video ini terpilih (semantik Veo 2026-11-04).
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun VideoListItem(
     video: VideoItem,
     progressFraction: Float?,
     isLastPlayed: Boolean,
+    selectionMode: Boolean,
+    selectionIndex: Int?,
     onVideoClick: (VideoItem) -> Unit,
+    onPlayClick: (VideoItem) -> Unit,
+    onLongPress: (VideoItem) -> Unit,
     onAddToPlaylistClick: (VideoItem) -> Unit,
+    onSelectClick: (VideoItem) -> Unit,
+    onRenameClick: (VideoItem) -> Unit,
+    onInfoClick: (VideoItem) -> Unit,
+    onDeleteClick: (VideoItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
+    val isSelected = selectionIndex != null
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable { onVideoClick(video) }
+            .then(
+                if (isSelected) {
+                    Modifier.background(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+                    )
+                } else {
+                    Modifier
+                }
+            )
+            .combinedClickable(
+                onClick = { onVideoClick(video) },
+                onLongClick = { onLongPress(video) }
+            )
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        if (selectionMode) {
+            Box(
+                modifier = Modifier
+                    .size(26.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (isSelected) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            Color.Transparent
+                        }
+                    )
+                    .border(
+                        width = 1.5.dp,
+                        color = if (isSelected) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                if (selectionIndex != null) {
+                    Text(
+                        text = selectionIndex.toString(),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+        }
         Box(
             modifier = Modifier
                 .width(120.dp)
@@ -159,7 +224,14 @@ fun VideoListItem(
                     text = { Text(stringResource(R.string.home_action_play)) },
                     onClick = {
                         menuExpanded = false
-                        onVideoClick(video)
+                        onPlayClick(video)
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.home_action_select)) },
+                    onClick = {
+                        menuExpanded = false
+                        onSelectClick(video)
                     }
                 )
                 DropdownMenuItem(
@@ -167,6 +239,32 @@ fun VideoListItem(
                     onClick = {
                         menuExpanded = false
                         onAddToPlaylistClick(video)
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.home_action_rename)) },
+                    onClick = {
+                        menuExpanded = false
+                        onRenameClick(video)
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.home_action_info)) },
+                    onClick = {
+                        menuExpanded = false
+                        onInfoClick(video)
+                    }
+                )
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = stringResource(R.string.home_action_delete),
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    },
+                    onClick = {
+                        menuExpanded = false
+                        onDeleteClick(video)
                     }
                 )
             }

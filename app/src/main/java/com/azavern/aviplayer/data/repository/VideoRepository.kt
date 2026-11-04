@@ -1,15 +1,18 @@
 package com.azavern.aviplayer.data.repository
 
+import android.content.IntentSender
 import com.azavern.aviplayer.data.model.SortConfig
 import com.azavern.aviplayer.data.model.SortField
 import com.azavern.aviplayer.data.model.VideoItem
 import com.azavern.aviplayer.data.source.FileScannerDataSource
+import com.azavern.aviplayer.data.source.MediaWriteResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 /**
@@ -47,6 +50,18 @@ class VideoRepository @Inject constructor(
             }
         }
     }
+
+    /** Ganti nama file di perangkat (lihat FileScannerDataSource.renameVideo). */
+    suspend fun renameVideo(path: String, newDisplayName: String): MediaWriteResult =
+        withContext(Dispatchers.IO) { fileScanner.renameVideo(path, newDisplayName) }
+
+    /** Hapus file dari perangkat (lihat FileScannerDataSource.deleteVideo). */
+    suspend fun deleteVideo(path: String): MediaWriteResult =
+        withContext(Dispatchers.IO) { fileScanner.deleteVideo(path) }
+
+    /** Satu dialog persetujuan sistem untuk banyak file sekaligus (Android 11+). */
+    suspend fun createWriteConsentSender(paths: List<String>): IntentSender? =
+        withContext(Dispatchers.IO) { fileScanner.createWriteConsentSender(paths) }
 
     /** Gabungkan daftar mentah dengan SortConfig aktif, lalu urutkan. */
     private fun Flow<List<VideoItem>>.applySort(): Flow<List<VideoItem>> =

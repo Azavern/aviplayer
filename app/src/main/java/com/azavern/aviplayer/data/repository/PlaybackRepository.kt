@@ -48,6 +48,11 @@ class PlaybackRepository @Inject constructor(
         }
     }
 
+    /** Hapus riwayat posisi satu video (mis. file-nya dihapus dari perangkat). */
+    suspend fun deletePosition(videoId: String) {
+        playbackStateDao.deleteByVideoId(videoId)
+    }
+
     /** Hapus semua riwayat posisi. */
     suspend fun clearAllPositions() {
         playbackStateDao.deleteAll()

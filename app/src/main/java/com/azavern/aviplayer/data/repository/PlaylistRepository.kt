@@ -77,6 +77,14 @@ class PlaylistRepository @Inject constructor(
 
     suspend fun removeVideoFromPlaylist(entryId: Long) = entryDao.deleteById(entryId)
 
+    /** Keluarkan file ini dari semua playlist (file dihapus dari perangkat). */
+    suspend fun removeAllEntriesForVideo(videoPath: String) =
+        entryDao.deleteByVideoPath(videoPath)
+
+    /** File diganti nama → semua entri yang menunjuknya mengikuti. */
+    suspend fun updateEntriesForRenamedVideo(oldPath: String, newPath: String, newTitle: String) =
+        entryDao.updateVideoPath(oldPath, newPath, newTitle)
+
     fun getPlaylistEntries(playlistId: Long): Flow<List<PlaylistEntry>> =
         entryDao.getByPlaylist(playlistId).map { entries ->
             entries.map { it.toDomain() }

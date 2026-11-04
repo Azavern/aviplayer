@@ -26,6 +26,9 @@ interface PlaybackStateDao {
     @Query("SELECT * FROM playback_state ORDER BY updatedAt DESC LIMIT 1")
     suspend fun getMostRecent(): PlaybackStateEntity?
 
+    @Query("DELETE FROM playback_state WHERE videoId = :videoId")
+    suspend fun deleteByVideoId(videoId: String)
+
     @Query("DELETE FROM playback_state")
     suspend fun deleteAll()
 }

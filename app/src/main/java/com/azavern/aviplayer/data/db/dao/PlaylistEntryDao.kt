@@ -25,6 +25,17 @@ interface PlaylistEntryDao {
     @Query("DELETE FROM playlist_entries WHERE id = :entryId")
     suspend fun deleteById(entryId: Long)
 
+    /** Keluarkan semua entri yang menunjuk file ini (file dihapus dari perangkat). */
+    @Query("DELETE FROM playlist_entries WHERE videoPath = :videoPath")
+    suspend fun deleteByVideoPath(videoPath: String)
+
+    /** File diganti nama → entri mengikuti path & judul barunya. */
+    @Query(
+        "UPDATE playlist_entries SET videoPath = :newPath, videoTitle = :newTitle " +
+            "WHERE videoPath = :oldPath"
+    )
+    suspend fun updateVideoPath(oldPath: String, newPath: String, newTitle: String)
+
     @Query("UPDATE playlist_entries SET orderIndex = :orderIndex WHERE id = :entryId")
     suspend fun updateOrderIndex(entryId: Long, orderIndex: Int)
 

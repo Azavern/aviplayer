@@ -40,8 +40,16 @@ fun VideoListScreen(
     playbackPositions: Map<String, Long>,
     lastPlayedVideoId: String?,
     onVideoClick: (VideoItem) -> Unit,
+    onPlayClick: (VideoItem) -> Unit,
+    onLongPress: (VideoItem) -> Unit,
     onCloseFolder: () -> Unit,
     onAddToPlaylistClick: (VideoItem) -> Unit,
+    onSelectClick: (VideoItem) -> Unit,
+    onRenameClick: (VideoItem) -> Unit,
+    onInfoClick: (VideoItem) -> Unit,
+    onDeleteClick: (VideoItem) -> Unit,
+    selectionMode: Boolean,
+    selectedVideoIds: List<String>,
     listState: LazyListState,
     modifier: Modifier = Modifier
 ) {
@@ -121,8 +129,17 @@ fun VideoListScreen(
                             video = video,
                             progressFraction = progress,
                             isLastPlayed = video.id == lastPlayedVideoId,
+                            selectionMode = selectionMode,
+                            selectionIndex = selectedVideoIds.indexOf(video.id)
+                                .takeIf { it >= 0 }?.plus(1),
                             onVideoClick = onVideoClick,
-                            onAddToPlaylistClick = onAddToPlaylistClick
+                            onPlayClick = onPlayClick,
+                            onLongPress = onLongPress,
+                            onAddToPlaylistClick = onAddToPlaylistClick,
+                            onSelectClick = onSelectClick,
+                            onRenameClick = onRenameClick,
+                            onInfoClick = onInfoClick,
+                            onDeleteClick = onDeleteClick
                         )
                     }
                 }
