@@ -43,10 +43,10 @@ import androidx.compose.ui.util.lerp
  */
 internal fun DrawScope.drawAviPlayLogo(tMs: Float) {
     val cameraScale = lerp(1.07f, 1f, EaseOut.transform(progress(tMs, 0f, 4200f)))
+    // Poros eksplisit di pusat logo: scale() Compose berpivot
+    // bawaan di tengah area gambar, bukan di titik yang kita mau.
     withTransform({
-        translate(627f, 617f)
-        scale(cameraScale, cameraScale)
-        translate(-627f, -617f)
+        scale(cameraScale, cameraScale, Offset(627f, 617f))
     }) {
         drawCircleLayers(tMs)
         drawPlayLayer(tMs)
@@ -338,8 +338,9 @@ internal fun ambientStateAt(t: Float): AmbientState {
 // ---------- Util transform & keyframe ----------
 
 /**
- * Transform satu lapisan ala CSS: poros di (cx, cy), geser (tx, ty),
- * lalu skala — urutan T(poros)·T(geser)·S·T(−poros).
+ * Transform satu lapisan ala CSS: geser (tx, ty), lalu skala
+ * berporos di (cx, cy) — poros disebut eksplisit karena bawaan
+ * scale() Compose adalah tengah area gambar.
  */
 private fun DrawScope.layerTransform(
     cx: Float,
@@ -350,10 +351,8 @@ private fun DrawScope.layerTransform(
     draw: DrawScope.() -> Unit
 ) {
     withTransform({
-        translate(cx, cy)
         translate(tx, ty)
-        scale(scale, scale)
-        translate(-cx, -cy)
+        scale(scale, scale, Offset(cx, cy))
     }) { draw() }
 }
 

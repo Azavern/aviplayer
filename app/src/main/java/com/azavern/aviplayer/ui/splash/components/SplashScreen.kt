@@ -130,7 +130,10 @@ fun SplashScreen(onFinished: () -> Unit) {
             val scale = logoPx / 1254f
             withTransform({
                 translate(center.x - logoPx / 2f, center.y - logoPx / 2f)
-                scale(scale, scale)
+                // Pivot WAJIB eksplisit di titik nol: bawaan scale()
+                // Compose adalah tengah area gambar, dan itulah yang
+                // sempat melempar logo keluar dari tengah layar.
+                scale(scale, scale, Offset.Zero)
             }) {
                 drawAviPlayLogo(t)
             }
