@@ -18,10 +18,12 @@ import com.azavern.aviplayer.ui.player.PlayerUiState
  * tengah [centerSlots], kanan [bottomRightSlots]. Slot EMPTY dan
  * slot yang fiturnya belum ada tidak digambar.
  *
- * Susunan bawaan (layout terverifikasi Veo): tengah =
- * sebelumnya / putar-jeda besar / berikutnya; kanan =
- * kamera / kecepatan / rotasi, rotasi paling pojok. Pengguna bisa
- * menukar posisi tombol lewat layar Kustomisasi.
+ * Susunan bawaan (spek Veo 2026-11-04): tengah = sebelumnya /
+ * putar-jeda besar / berikutnya; kiri bawah (tetap 3 slot) =
+ * bisu / kamera / kosong; kanan bawah (tetap 2 slot) =
+ * kecepatan / rotasi, kecepatan di samping rotasi dan rotasi
+ * paling pojok. Pengguna bisa menukar posisi tombol lewat layar
+ * Kustomisasi.
  */
 @Composable
 fun PlayerControls(
