@@ -82,7 +82,7 @@ fun SplashScreen(onFinished: () -> Unit) {
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val t = timeMs
-            val center = size.center
+            // `center` di sini adalah DrawScope.center (pusat canvas).
             // Ukuran logo ala demo: 82% sisi terpendek layar, maks 680dp.
             val logoPx = minOf(size.width, size.height) * 0.82f
                 .coerceAtMost(680.dp.toPx())

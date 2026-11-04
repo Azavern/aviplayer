@@ -26,7 +26,7 @@ import androidx.compose.ui.util.lerp
  * - Lingkaran (dasar + azure + magenta) terbentuk dengan overshoot
  *   halus dari scale .55; lapisan shade menyusul mengecil dari 1.25.
  * - Segitiga play meluncur masuk dari kiri; sheen-nya memudar masuk.
- * - Sapuan cahaya (sweep) menyapu lingkaran sekali, blend soft-light.
+ * - Sapuan cahaya (sweep) menyapu lingkaran sekali, blend overlay.
  * - Huruf "AviPlay" masuk bergantian (stagger) dari bawah; titik
  *   huruf i jatuh dari atas; lubang play pada A meletup (pop).
  * - Penutup: halo teks bernapas, kilat bloom (di SplashScreen), dan
@@ -143,7 +143,9 @@ private fun DrawScope.drawSweepLayer(t: Float) {
                 end = Offset(tx + 565f, 0f)
             ),
             alpha = alpha,
-            blendMode = BlendMode.SoftLight
+            // Demo memakai soft-light; BlendMode Compose tak punya
+            // SoftLight — Overlay adalah padanan terdekatnya.
+            blendMode = BlendMode.Overlay
         )
     }
 }

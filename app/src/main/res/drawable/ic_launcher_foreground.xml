@@ -160,7 +160,7 @@
         <path
             android:pathData="M128,706 L228,497 Q270,440 312,497 L405,700 Q410,712 398,712 L356,712 Q346,712 342,703 L336,692 Q331,682 318,682 L224,682 Q210,682 206,692 L200,703 Q196,712 186,712 L136,712 Q124,712 128,706 Z M243,567 L313,608 Q324,614 313,621 L250,661 Q237,667 237,652 L237,578 Q237,571 243,567Z"
             android:fillColor="#FFFFFF"
-            android:pathFillType="evenOdd" />
+            android:fillType="evenOdd" />
         <path
             android:pathData="M363,553 Q362,543 374,543 L406,543 Q417,543 421,553 L446,620 L475,553 Q479,543 490,543 L514,543 Q526,543 522,555 L474,688 Q470,700 458,700 L430,700 Q418,700 414,688 Z"
             android:fillColor="#FFFFFF" />
@@ -174,7 +174,7 @@
         <!-- Huruf Play: gradasi lavender -->
         <path
             android:pathData="M616,485 L735,485 Q780,485 780,555 Q780,625 735,625 L657,625 L657,690 Q657,698 649,698 L616,698 Q608,698 608,690 L608,493 Q608,485 616,485 Z M657,521 L718,521 Q728,521 728,555 Q728,589 718,589 L657,589 Z"
-            android:pathFillType="evenOdd">
+            android:fillType="evenOdd">
             <aapt:attr name="android:fillColor">
                 <gradient
                     android:type="linear"
@@ -202,7 +202,7 @@
         </path>
         <path
             android:pathData="M872,562 Q905,543 950,543 Q1000,543 1000,595 L1000,690 Q1000,698 992,698 L962,698 Q954,698 952,690 L950,682 Q925,702 895,702 Q852,700 852,655 Q852,610 905,603 L950,598 Q950,580 920,580 Q895,580 880,592 Q866,592 872,562 Z M898,648 Q898,632 925,630 L950,630 L950,655 Q935,668 915,668 Q898,668 898,648 Z"
-            android:pathFillType="evenOdd">
+            android:fillType="evenOdd">
             <aapt:attr name="android:fillColor">
                 <gradient
                     android:type="linear"
