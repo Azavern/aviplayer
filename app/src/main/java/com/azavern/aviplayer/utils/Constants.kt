@@ -26,6 +26,8 @@ object Constants {
     const val PREF_FOLDER_FILTER_MODE = "pref_folder_filter_mode"
     const val PREF_WHITELISTED_PATHS = "pref_whitelisted_paths"
     const val PREF_SEEK_STEP_MS = "pref_seek_step_ms"
+    const val PREF_SORT_FIELD = "pref_sort_field"
+    const val PREF_SORT_ASCENDING = "pref_sort_ascending"
     const val PREF_ORIENTATION_MODE = "pref_orientation_mode"
 
     // ---- Nilai bawaan & perilaku (Blueprint Bagian 7 dan 9) ----

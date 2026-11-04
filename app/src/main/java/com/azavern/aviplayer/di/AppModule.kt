@@ -98,8 +98,10 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideVideoRepository(fileScanner: FileScannerDataSource): VideoRepository =
-        VideoRepository(fileScanner)
+    fun provideVideoRepository(
+        fileScanner: FileScannerDataSource,
+        settingsRepository: SettingsRepository
+    ): VideoRepository = VideoRepository(fileScanner, settingsRepository)
 
     @Provides
     @Singleton

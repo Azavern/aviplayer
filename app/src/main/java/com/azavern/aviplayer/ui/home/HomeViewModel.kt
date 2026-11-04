@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.azavern.aviplayer.data.model.FolderItem
 import com.azavern.aviplayer.data.model.PlaylistEntry
+import com.azavern.aviplayer.data.model.SortConfig
+import com.azavern.aviplayer.data.model.SortField
 import com.azavern.aviplayer.data.model.VideoItem
 import com.azavern.aviplayer.data.repository.FolderRepository
 import com.azavern.aviplayer.data.repository.PlaybackRepository
@@ -48,6 +50,12 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             settingsRepository.getThemeConfig().collect { config ->
                 _uiState.update { it.copy(themeConfig = config) }
+            }
+        }
+        // Urutan daftar (sorting global) mengikuti SettingsRepository.
+        viewModelScope.launch {
+            settingsRepository.getSortConfig().collect { config ->
+                _uiState.update { it.copy(sortConfig = config) }
             }
         }
     }
@@ -115,14 +123,20 @@ class HomeViewModel @Inject constructor(
         _uiState.update { it.copy(miniBarDismissed = true) }
     }
 
-    fun loadVideos() {
+    fun loadVideos(showLoading: Boolean = true) {
         videoLoadJob?.cancel()
         videoLoadJob = viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
+            if (showLoading) _uiState.update { it.copy(isLoading = true, error = null) }
             videoRepository.getAllVideos()
-                .catch { e -> _uiState.update { it.copy(isLoading = false, error = e.message) } }
+                .catch { e ->
+                    _uiState.update {
+                        it.copy(isLoading = false, isRefreshing = false, error = e.message)
+                    }
+                }
                 .collect { videos ->
-                    _uiState.update { it.copy(videos = videos, isLoading = false) }
+                    _uiState.update {
+                        it.copy(videos = videos, isLoading = false, isRefreshing = false)
+                    }
                 }
         }
     }
@@ -130,8 +144,12 @@ class HomeViewModel @Inject constructor(
     fun loadFolders() {
         viewModelScope.launch {
             folderRepository.getVisibleFolders()
-                .catch { e -> _uiState.update { it.copy(error = e.message) } }
-                .collect { folders -> _uiState.update { it.copy(folders = folders) } }
+                .catch { e ->
+                    _uiState.update { it.copy(isRefreshing = false, error = e.message) }
+                }
+                .collect { folders ->
+                    _uiState.update { it.copy(folders = folders, isRefreshing = false) }
+                }
         }
     }
 
@@ -145,22 +163,84 @@ class HomeViewModel @Inject constructor(
         videoLoadJob?.cancel()
         videoLoadJob = viewModelScope.launch {
             videoRepository.searchVideos(query)
-                .catch { e -> _uiState.update { it.copy(error = e.message) } }
-                .collect { videos -> _uiState.update { it.copy(videos = videos) } }
+                .catch { e ->
+                    _uiState.update { it.copy(isRefreshing = false, error = e.message) }
+                }
+                .collect { videos ->
+                    _uiState.update { it.copy(videos = videos, isRefreshing = false) }
+                }
         }
     }
 
     /** Tap folder → tampilkan video di dalam folder itu pada tab Video. */
     fun onFolderClicked(folder: FolderItem) {
         _uiState.update { it.copy(activeFolder = folder, activeTab = HomeTab.VIDEO, searchQuery = "") }
+        loadFolderVideos(folder)
+    }
+
+    private fun loadFolderVideos(folder: FolderItem, showLoading: Boolean = true) {
         videoLoadJob?.cancel()
         videoLoadJob = viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            if (showLoading) _uiState.update { it.copy(isLoading = true) }
             videoRepository.getVideosByFolder(folder.path)
-                .catch { e -> _uiState.update { it.copy(isLoading = false, error = e.message) } }
-                .collect { videos ->
-                    _uiState.update { it.copy(videos = videos, isLoading = false) }
+                .catch { e ->
+                    _uiState.update {
+                        it.copy(isLoading = false, isRefreshing = false, error = e.message)
+                    }
                 }
+                .collect { videos ->
+                    _uiState.update {
+                        it.copy(videos = videos, isLoading = false, isRefreshing = false)
+                    }
+                }
+        }
+    }
+
+    // ---- Urutan & penyegaran (sorting global + refresh) ----
+
+    /**
+     * Pilih bidang urutan dari menu: bidang baru memakai arah
+     * bawaannya (mis. Nama → A–Z, Waktu → terbaru dulu). Memilih
+     * bidang yang sama tidak mengubah apa pun — arah diatur tombol
+     * naik/turun di sebelah menu.
+     */
+    fun onSortFieldSelected(field: SortField) {
+        if (field == _uiState.value.sortConfig.field) return
+        viewModelScope.launch {
+            settingsRepository.updateSortConfig(SortConfig.forField(field))
+        }
+    }
+
+    /** Tombol naik/turun: balik arah urutan bidang yang aktif. */
+    fun onToggleSortDirection() {
+        val current = _uiState.value.sortConfig
+        viewModelScope.launch {
+            settingsRepository.updateSortConfig(
+                current.copy(ascending = !current.ascending)
+            )
+        }
+    }
+
+    /**
+     * Segarkan daftar yang sedang tampil (tarik ke bawah atau tombol
+     * refresh): scan ulang MediaStore untuk konteks saat ini — daftar
+     * Beranda, hasil pencarian, isi folder, daftar folder, atau
+     * playlist — supaya file yang baru masuk muncul tanpa membuka
+     * ulang aplikasi. Indikator berhenti saat emisi baru tiba.
+     */
+    fun refresh() {
+        val state = _uiState.value
+        if (!state.hasPermission || state.isRefreshing) return
+        _uiState.update { it.copy(isRefreshing = true) }
+        when (state.activeTab) {
+            HomeTab.VIDEO -> when {
+                state.activeFolder != null ->
+                    loadFolderVideos(state.activeFolder, showLoading = false)
+                state.searchQuery.isNotBlank() -> onSearchQueryChanged(state.searchQuery)
+                else -> loadVideos(showLoading = false)
+            }
+            HomeTab.FOLDER -> loadFolders()
+            HomeTab.PLAYLIST -> loadPlaylists()
         }
     }
 
@@ -193,8 +273,12 @@ class HomeViewModel @Inject constructor(
     fun loadPlaylists() {
         viewModelScope.launch {
             playlistRepository.getAllPlaylists()
-                .catch { e -> _uiState.update { it.copy(error = e.message) } }
-                .collect { playlists -> _uiState.update { it.copy(playlists = playlists) } }
+                .catch { e ->
+                    _uiState.update { it.copy(isRefreshing = false, error = e.message) }
+                }
+                .collect { playlists ->
+                    _uiState.update { it.copy(playlists = playlists, isRefreshing = false) }
+                }
         }
     }
 

@@ -3,6 +3,7 @@ package com.azavern.aviplayer.ui.home
 import com.azavern.aviplayer.data.model.FolderItem
 import com.azavern.aviplayer.data.model.PlaylistEntry
 import com.azavern.aviplayer.data.model.PlaylistInfo
+import com.azavern.aviplayer.data.model.SortConfig
 import com.azavern.aviplayer.data.model.ThemeConfig
 import com.azavern.aviplayer.data.model.VideoItem
 
@@ -36,7 +37,11 @@ data class HomeUiState(
     /** Entri playlist yang sedang dibuka, sesuai urutan tampil. */
     val playlistEntries: List<PlaylistEntry> = emptyList(),
     /** Video yang menunggu dipilihkan playlist (dialog pemilih). */
-    val pendingPlaylistVideo: VideoItem? = null
+    val pendingPlaylistVideo: VideoItem? = null,
+    /** Urutan daftar video yang sedang berlaku (sorting global). */
+    val sortConfig: SortConfig = SortConfig.Default,
+    /** Sedang memuat ulang daftar (tarik-untuk-segarkan / tombol refresh). */
+    val isRefreshing: Boolean = false
 )
 
 enum class HomeTab { VIDEO, FOLDER, PLAYLIST }

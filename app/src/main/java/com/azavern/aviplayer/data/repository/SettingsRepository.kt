@@ -3,6 +3,8 @@ package com.azavern.aviplayer.data.repository
 import com.azavern.aviplayer.data.model.ControlLayoutConfig
 import com.azavern.aviplayer.data.model.FolderFilterMode
 import com.azavern.aviplayer.data.model.FolderVisibilityConfig
+import com.azavern.aviplayer.data.model.SortConfig
+import com.azavern.aviplayer.data.model.SortField
 import com.azavern.aviplayer.data.model.PlayerUiConfig
 import com.azavern.aviplayer.data.model.ThemeConfig
 import com.azavern.aviplayer.data.model.ThemeMode
@@ -128,6 +130,25 @@ class SettingsRepository @Inject constructor(
                 ListSerializer(String.serializer()), config.whitelistedPaths.toList()
             )
         )
+    }
+
+    // ---- Urutan daftar video (sorting global) ----
+
+    /** Bidang urutan + arah dari DataStore; nama rusak → TIME. */
+    fun getSortConfig(): Flow<SortConfig> = combine(
+        preferenceDataSource.getSortField(),
+        preferenceDataSource.getSortAscending()
+    ) { fieldName, ascending ->
+        SortConfig(
+            field = runCatching { SortField.valueOf(fieldName) }
+                .getOrDefault(SortField.TIME),
+            ascending = ascending
+        )
+    }
+
+    suspend fun updateSortConfig(config: SortConfig) {
+        preferenceDataSource.setSortField(config.field.name)
+        preferenceDataSource.setSortAscending(config.ascending)
     }
 
     /** Semua konfigurasi tampilan player dalam satu Flow. */

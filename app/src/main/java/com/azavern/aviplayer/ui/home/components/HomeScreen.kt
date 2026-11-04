@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.VideoLibrary
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -17,6 +18,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -78,6 +80,14 @@ fun HomeScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.app_name)) },
                 actions = {
+                    if (uiState.hasPermission) {
+                        IconButton(onClick = viewModel::refresh) {
+                            Icon(
+                                imageVector = Icons.Rounded.Refresh,
+                                contentDescription = stringResource(R.string.home_refresh)
+                            )
+                        }
+                    }
                     IconButton(onClick = onNavigateToCustomization) {
                         Icon(
                             imageVector = Icons.Rounded.Tune,
@@ -119,23 +129,40 @@ fun HomeScreen(
                             query = uiState.searchQuery,
                             onQueryChange = viewModel::onSearchQueryChanged
                         )
-                        VideoListScreen(
-                            videos = uiState.videos,
+                        SortBar(
+                            sortConfig = uiState.sortConfig,
+                            onFieldSelected = viewModel::onSortFieldSelected,
+                            onToggleDirection = viewModel::onToggleSortDirection
+                        )
+                        PullToRefreshBox(
+                            isRefreshing = uiState.isRefreshing,
+                            onRefresh = viewModel::refresh,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            VideoListScreen(
+                                videos = uiState.videos,
+                                isLoading = uiState.isLoading,
+                                activeFolder = uiState.activeFolder,
+                                playbackPositions = uiState.playbackPositions,
+                                lastPlayedVideoId = uiState.lastPlayedVideoId,
+                                onVideoClick = viewModel::onVideoClicked,
+                                onCloseFolder = viewModel::onCloseFolder,
+                                onAddToPlaylistClick = viewModel::onAddToPlaylistRequested,
+                                listState = videoListState
+                            )
+                        }
+                    }
+                    HomeTab.FOLDER -> PullToRefreshBox(
+                        isRefreshing = uiState.isRefreshing,
+                        onRefresh = viewModel::refresh,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        FolderGridScreen(
+                            folders = uiState.folders,
                             isLoading = uiState.isLoading,
-                            activeFolder = uiState.activeFolder,
-                            playbackPositions = uiState.playbackPositions,
-                            lastPlayedVideoId = uiState.lastPlayedVideoId,
-                            onVideoClick = viewModel::onVideoClicked,
-                            onCloseFolder = viewModel::onCloseFolder,
-                            onAddToPlaylistClick = viewModel::onAddToPlaylistRequested,
-                            listState = videoListState
+                            onFolderClick = viewModel::onFolderClicked
                         )
                     }
-                    HomeTab.FOLDER -> FolderGridScreen(
-                        folders = uiState.folders,
-                        isLoading = uiState.isLoading,
-                        onFolderClick = viewModel::onFolderClicked
-                    )
                     HomeTab.PLAYLIST -> {
                         val openPlaylist = uiState.playlists
                             .firstOrNull { it.id == uiState.openPlaylistId }

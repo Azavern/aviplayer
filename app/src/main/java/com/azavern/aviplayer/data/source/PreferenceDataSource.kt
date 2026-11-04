@@ -119,6 +119,26 @@ class PreferenceDataSource @Inject constructor(
         dataStore.edit { it[KEY_WHITELISTED_PATHS] = json }
     }
 
+    // ---- Urutan daftar video / sorting global ----
+
+    /** Nama enum SortField: "NAME" | "TIME" | "SIZE" | "DURATION". */
+    fun getSortField(): Flow<String> = dataStore.data.map { prefs ->
+        prefs[KEY_SORT_FIELD] ?: "TIME"
+    }
+
+    suspend fun setSortField(field: String) {
+        dataStore.edit { it[KEY_SORT_FIELD] = field }
+    }
+
+    /** true = naik (A–Z / terkecil / terlama), false = turun. */
+    fun getSortAscending(): Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[KEY_SORT_ASCENDING] ?: false
+    }
+
+    suspend fun setSortAscending(ascending: Boolean) {
+        dataStore.edit { it[KEY_SORT_ASCENDING] = ascending }
+    }
+
     // ---- Layout kontrol player (Milestone 7) ----
 
     /** JSON ControlLayoutConfig; null = belum pernah disimpan. */
@@ -137,6 +157,7 @@ class PreferenceDataSource @Inject constructor(
         val KEY_FOLDER_FILTER_MODE = stringPreferencesKey(Constants.PREF_FOLDER_FILTER_MODE)
         val KEY_WHITELISTED_PATHS = stringPreferencesKey(Constants.PREF_WHITELISTED_PATHS)
         val KEY_ORIENTATION_MODE = stringPreferencesKey(Constants.PREF_ORIENTATION_MODE)
+        val KEY_SORT_FIELD = stringPreferencesKey(Constants.PREF_SORT_FIELD)
 
         // Long keys (warna disimpan sebagai color int)
         val KEY_ACCENT_COLOR = longPreferencesKey(Constants.PREF_ACCENT_COLOR)
@@ -146,6 +167,7 @@ class PreferenceDataSource @Inject constructor(
         val KEY_USE_SYSTEM_ACCENT = booleanPreferencesKey(Constants.PREF_USE_SYSTEM_ACCENT)
         val KEY_TITLE_BOLD = booleanPreferencesKey(Constants.PREF_TITLE_BOLD)
         val KEY_TITLE_MARQUEE = booleanPreferencesKey(Constants.PREF_TITLE_MARQUEE)
+        val KEY_SORT_ASCENDING = booleanPreferencesKey(Constants.PREF_SORT_ASCENDING)
 
         // Float & Int keys
         val KEY_TITLE_FONT_SIZE = floatPreferencesKey(Constants.PREF_TITLE_FONT_SIZE)

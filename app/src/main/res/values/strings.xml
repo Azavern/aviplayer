@@ -53,6 +53,14 @@
     <string name="playlist_remove_entry">Keluarkan dari playlist</string>
     <string name="playlist_video_count">%1$d video</string>
     <string name="playlist_drag_hint">Tekan lama lalu seret untuk mengubah urutan</string>
+    <string name="sort_label">Urutkan: %1$s</string>
+    <string name="sort_field_name">Nama</string>
+    <string name="sort_field_time">Waktu</string>
+    <string name="sort_field_size">Ukuran</string>
+    <string name="sort_field_duration">Durasi</string>
+    <string name="sort_ascending">Urutan naik</string>
+    <string name="sort_descending">Urutan turun</string>
+    <string name="home_refresh">Segarkan daftar</string>
     <string name="title_editor_font_size">Ukuran font judul</string>
     <string name="title_editor_lines">Jumlah baris judul</string>
     <string name="title_editor_bold">Teks tebal</string>
