@@ -199,7 +199,11 @@ fun TitleStyleEditor(
                 actions = PlayerControlActions({}, {}, {}, {}, {}, {}, {}, {}),
                 onBackClick = {},
                 playbackMode = PlaybackMode.LOOP_ALL,
-                onPlaybackModeSelected = {}
+                onPlaybackModeSelected = {},
+                volumeLevel = 0.7f,
+                brightnessLevel = 0.7f,
+                onVolumeChange = {},
+                onBrightnessChange = {}
             )
         }
     }

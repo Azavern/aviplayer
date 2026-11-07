@@ -91,6 +91,9 @@
     <string name="player_action_lock">Kunci kontrol</string>
     <string name="player_action_unlock">Buka kunci kontrol</string>
     <string name="player_action_playback_mode">Mode putar</string>
+    <string name="player_menu_volume">Volume</string>
+    <string name="player_menu_brightness">Kecerahan</string>
+    <string name="player_menu_playback_mode">Mode pemutaran</string>
     <string name="playback_mode_loop_all">Ulang Semua</string>
     <string name="playback_mode_shuffle">Acak Semua</string>
     <string name="playback_mode_single_loop">Ulang Satu Video</string>

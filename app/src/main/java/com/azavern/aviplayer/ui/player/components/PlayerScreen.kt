@@ -154,7 +154,16 @@ fun PlayerScreen(
         onCapture = { noteInteraction(); onCaptureClick() },
         onSpeed = { noteInteraction(); onSpeedClick() },
         onMute = { noteInteraction(); onMuteClick() },
-        onLock = { noteInteraction(); onLockClick() }
+        onLock = {
+            noteInteraction()
+            // Tombol buka kunci harus sudah "tampil" pada bingkai
+            // pertama sesudah kunci berbalik, supaya wadah LOCK tidak
+            // memulai animasi keluar lalu masuk lagi beruntun
+            // (tumpukan animasi itu terindikasi memicu crash
+            // RenderThread di perangkat Veo — logcat 2026-11-08).
+            if (!uiState.isLocked) lockButtonVisible = true
+            onLockClick()
+        }
     )
     val layout = uiState.playerUiConfig.controlLayoutConfig
     // Wadah tempat slot LOCK tinggal saat ini (kanan atas atau
@@ -242,6 +251,10 @@ fun PlayerScreen(
                 onBackClick = onBackClick,
                 playbackMode = uiState.playbackMode,
                 onPlaybackModeSelected = onPlaybackModeSelected,
+                volumeLevel = uiState.volumeLevel,
+                brightnessLevel = uiState.brightnessLevel,
+                onVolumeChange = { noteInteraction(); onVolumeChange(it) },
+                onBrightnessChange = { noteInteraction(); onBrightnessChange(it) },
                 lockedOnly = uiState.isLocked
             )
         }

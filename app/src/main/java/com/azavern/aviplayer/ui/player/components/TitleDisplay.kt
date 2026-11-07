@@ -6,6 +6,8 @@ import android.os.BatteryManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,16 +15,20 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.Repeat
+import androidx.compose.material.icons.rounded.RepeatOne
+import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Slider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,7 +40,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -80,14 +85,18 @@ import java.util.Locale
  *
  * KONSEP FIX KANAN ATAS (perintah Veo 2026-11-08), urutan dari
  * pojok ke tengah: (1) kotak baterai + jam — tetap, paling pojok;
- * (2) tombol TITIK TIGA — tetap, bukan slot layout, isinya menu
- * mode putar (4 mode, yang aktif ditandai centang); (3) slot kanan
+ * (2) tombol TITIK TIGA — tetap, bukan slot layout, isinya panel
+ * cepat (slider volume + kecerahan dan bar segmentasi mode
+ * pemutaran, mengikuti referensi Veo 2026-11-08); (3) slot kanan
  * atas layout, bisa ditukar dari editor (bawaan Bisu).
  *
  * Mode [lockedOnly] (player terkunci): elemen tetap dan slot
- * selain LOCK digelapkan total (alpha 0, nonaktif) atau diganti
- * spacer, sehingga bila LOCK kebetulan tinggal di kanan atas ia
- * tetap duduk persis di posisi slotnya sebagai tombol buka kunci.
+ * selain LOCK diganti spacer polos berukuran sama, sehingga bila
+ * LOCK kebetulan tinggal di kanan atas ia tetap duduk persis di
+ * posisi slotnya sebagai tombol buka kunci. Spacer polos — BUKAN
+ * lapisan alpha — karena tumpukan lapisan transparan di dalam
+ * animasi bar atas terbukti memicu crash RenderThread (SIGSEGV)
+ * di perangkat Veo saat tombol kunci ditekan (logcat 2026-11-08).
  */
 @Composable
 fun TitleDisplay(
@@ -99,6 +108,10 @@ fun TitleDisplay(
     onBackClick: () -> Unit,
     playbackMode: PlaybackMode,
     onPlaybackModeSelected: (PlaybackMode) -> Unit,
+    volumeLevel: Float,
+    brightnessLevel: Float,
+    onVolumeChange: (Float) -> Unit,
+    onBrightnessChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
     lockedOnly: Boolean = false
 ) {
@@ -111,39 +124,45 @@ fun TitleDisplay(
             .padding(horizontal = 10.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(
-            onClick = onBackClick,
-            enabled = !lockedOnly,
-            modifier = if (lockedOnly) Modifier.alpha(0f) else Modifier
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                contentDescription = stringResource(R.string.player_action_back),
-                tint = Color.White
+        if (lockedOnly) {
+            // Spacer polos pengganti tombol kembali (jejak 48dp).
+            Box(Modifier.size(48.dp))
+        } else {
+            IconButton(onClick = onBackClick) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                    contentDescription = stringResource(R.string.player_action_back),
+                    tint = Color.White
+                )
+            }
+        }
+        if (lockedOnly) {
+            // Spacer polos pengganti judul; bobot sama supaya slot
+            // kanan atas tidak bergeser dari posisi aslinya.
+            Box(Modifier.weight(1f))
+        } else {
+            Text(
+                text = title,
+                color = Color(titleConfig.color),
+                fontSize = titleConfig.fontSizeSp.sp,
+                fontWeight = if (titleConfig.isBold) FontWeight.Bold else FontWeight.Normal,
+                maxLines = titleConfig.maxLines,
+                overflow = if (titleConfig.marqueeEnabled) {
+                    TextOverflow.Visible
+                } else {
+                    TextOverflow.Ellipsis
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .then(
+                        if (titleConfig.marqueeEnabled && titleConfig.maxLines == 1) {
+                            Modifier.basicMarquee()
+                        } else {
+                            Modifier
+                        }
+                    )
             )
         }
-        Text(
-            text = title,
-            color = Color(titleConfig.color),
-            fontSize = titleConfig.fontSizeSp.sp,
-            fontWeight = if (titleConfig.isBold) FontWeight.Bold else FontWeight.Normal,
-            maxLines = titleConfig.maxLines,
-            overflow = if (titleConfig.marqueeEnabled) {
-                TextOverflow.Visible
-            } else {
-                TextOverflow.Ellipsis
-            },
-            modifier = Modifier
-                .weight(1f)
-                .then(
-                    if (titleConfig.marqueeEnabled && titleConfig.maxLines == 1) {
-                        Modifier.basicMarquee()
-                    } else {
-                        Modifier
-                    }
-                )
-                .then(if (lockedOnly) Modifier.alpha(0f) else Modifier)
-        )
         topRightSlots.forEach { slot ->
             if (lockedOnly && slot != ControlSlot.LOCK) {
                 ControlSlotSpacer(slot = slot)
@@ -153,51 +172,110 @@ fun TitleDisplay(
         }
         // Titik tiga tetap: jangkar menu mode putar.
         Box {
-            IconButton(
-                onClick = { modeMenuOpen = true },
-                enabled = !lockedOnly,
-                modifier = if (lockedOnly) Modifier.alpha(0f) else Modifier
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.MoreVert,
-                    contentDescription = stringResource(R.string.player_action_playback_mode),
-                    tint = Color.White
-                )
+            if (lockedOnly) {
+                // Spacer polos pengganti titik tiga (jejak 48dp).
+                Box(Modifier.size(48.dp))
+            } else {
+                IconButton(onClick = { modeMenuOpen = true }) {
+                    Icon(
+                        imageVector = Icons.Rounded.MoreVert,
+                        contentDescription = stringResource(R.string.player_action_playback_mode),
+                        tint = Color.White
+                    )
+                }
             }
             DropdownMenu(
                 expanded = modeMenuOpen && !lockedOnly,
                 onDismissRequest = { modeMenuOpen = false }
             ) {
-                PlaybackMode.entries.forEach { mode ->
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                text = stringResource(playbackModeLabelRes(mode)),
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        },
-                        onClick = {
-                            modeMenuOpen = false
-                            onPlaybackModeSelected(mode)
-                        },
-                        leadingIcon = if (mode == playbackMode) {
-                            {
+                // Panel cepat (referensi Veo 2026-11-08): slider
+                // volume & kecerahan supaya bisa diatur tanpa
+                // gesture, lalu mode pemutaran sebagai bar
+                // segmentasi 4 ikon. Panel tetap terbuka selama
+                // diatur; tutup dengan mengetuk di luar panel.
+                Column(
+                    modifier = Modifier
+                        .width(256.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.player_menu_volume),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Slider(
+                        value = volumeLevel.coerceIn(0f, 1f),
+                        onValueChange = onVolumeChange,
+                        valueRange = 0f..1f
+                    )
+                    Text(
+                        text = stringResource(R.string.player_menu_brightness),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                    Slider(
+                        value = brightnessLevel.coerceIn(0f, 1f),
+                        onValueChange = onBrightnessChange,
+                        valueRange = 0f..1f
+                    )
+                    Text(
+                        text = stringResource(R.string.player_menu_playback_mode),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(50))
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .padding(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        // Urutan simbol dari referensi Veo: Loop All,
+                        // Single Loop, Shuffle, Single Play.
+                        PLAYBACK_MODE_MENU_ORDER.forEach { mode ->
+                            val selected = mode == playbackMode
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(50))
+                                    .background(
+                                        if (selected) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            Color.Transparent
+                                        }
+                                    )
+                                    .clickable { onPlaybackModeSelected(mode) }
+                                    .padding(vertical = 8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
                                 Icon(
-                                    imageVector = Icons.Rounded.Check,
-                                    contentDescription = null
+                                    imageVector = playbackModeIcon(mode),
+                                    contentDescription = stringResource(
+                                        playbackModeLabelRes(mode)
+                                    ),
+                                    tint = if (selected) {
+                                        MaterialTheme.colorScheme.onPrimary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    }
                                 )
                             }
-                        } else {
-                            null
                         }
-                    )
+                    }
                 }
             }
         }
         // Kotak baterai + jam: tetap, paling pojok kanan atas.
-        SystemStatusIndicator(
-            modifier = if (lockedOnly) Modifier.alpha(0f) else Modifier
-        )
+        if (lockedOnly) {
+            // Spacer polos pengganti kotak baterai/jam (lebar ±38dp).
+            Box(Modifier.width(38.dp))
+        } else {
+            SystemStatusIndicator()
+        }
     }
 }
 
@@ -208,6 +286,22 @@ private fun playbackModeLabelRes(mode: PlaybackMode): Int = when (mode) {
     PlaybackMode.SINGLE_LOOP -> R.string.playback_mode_single_loop
     PlaybackMode.SINGLE_PLAY -> R.string.playback_mode_single_play
 }
+
+/** Ikon bar segmentasi untuk tiap mode putar. */
+private fun playbackModeIcon(mode: PlaybackMode) = when (mode) {
+    PlaybackMode.LOOP_ALL -> Icons.Rounded.Repeat
+    PlaybackMode.SINGLE_LOOP -> Icons.Rounded.RepeatOne
+    PlaybackMode.SHUFFLE -> Icons.Rounded.Shuffle
+    PlaybackMode.SINGLE_PLAY -> Icons.Rounded.SkipNext
+}
+
+/** Urutan ikon mode di panel titik tiga, persis referensi Veo 2026-11-08. */
+private val PLAYBACK_MODE_MENU_ORDER = listOf(
+    PlaybackMode.LOOP_ALL,
+    PlaybackMode.SINGLE_LOOP,
+    PlaybackMode.SHUFFLE,
+    PlaybackMode.SINGLE_PLAY
+)
 
 /**
  * Kotak baterai + jam dinding untuk pojok kanan atas player
