@@ -97,8 +97,14 @@ fun PlayerScreen(
 ) {
     // Lencana hasil capture tampil ±1,5 detik, lalu state dibersihkan
     // lewat onCaptureResultConsumed supaya tidak muncul dua kali.
+    // Ikon lencana dibaca dari SALINAN hasil terakhir ini, bukan dari
+    // state langsung: begitu state dibersihkan (null), animasi keluar
+    // masih berjalan dan ikon centang sempat berbalik menjadi silang
+    // (bug yang dilihat Veo 2026-11-08).
+    var lastCaptureResult by remember { mutableStateOf<CaptureResult?>(null) }
     LaunchedEffect(uiState.captureResult) {
         if (uiState.captureResult != null) {
+            lastCaptureResult = uiState.captureResult
             delay(1500)
             onCaptureResultConsumed()
         }
@@ -263,14 +269,18 @@ fun PlayerScreen(
         // Snackbar kotak teks): lingkaran berisi centang (atau silang
         // bila gagal) yang menempel di tepi kanan layar, nyaris keluar
         // — hanya disisakan margin beberapa piksel. Meluncur masuk
-        // dari kanan dan menghilang sendiri.
+        // dari kanan dan menghilang sendiri. Posisinya diturunkan
+        // merapat ke seekbar (perintah Veo 2026-11-08): tepat di atas
+        // seekbar dengan jarak ±10dp — tepi bawah lencana 106dp dari
+        // bawah layar (gugus tombol 62 + tinggi seekbar 48 − geser
+        // turun seekbar 14 + jarak 10).
         AnimatedVisibility(
             visible = uiState.captureResult != null,
             enter = slideInHorizontally { it } + fadeIn(),
             exit = slideOutHorizontally { it } + fadeOut(),
             modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .padding(end = 6.dp)
+                .align(Alignment.BottomEnd)
+                .padding(end = 6.dp, bottom = 106.dp)
         ) {
             Box(
                 modifier = Modifier
@@ -280,7 +290,7 @@ fun PlayerScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = if (uiState.captureResult is CaptureResult.Success) {
+                    imageVector = if (lastCaptureResult is CaptureResult.Success) {
                         Icons.Filled.Check
                     } else {
                         Icons.Filled.Close
