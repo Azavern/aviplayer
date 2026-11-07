@@ -38,6 +38,9 @@ class CustomizationViewModel @Inject constructor(
     sealed class SlotPosition {
         data class TopRight(val index: Int) : SlotPosition()
         data class Center(val index: Int) : SlotPosition()
+
+        /** Area kiri tengah: tepat satu slot, tanpa indeks. */
+        data object MiddleLeft : SlotPosition()
         data class BottomLeft(val index: Int) : SlotPosition()
         data class BottomRight(val index: Int) : SlotPosition()
     }
@@ -141,6 +144,7 @@ class CustomizationViewModel @Inject constructor(
                     config.topRightSlots.getOrElse(position.index) { ControlSlot.EMPTY }
                 is SlotPosition.Center ->
                     config.centerSlots.getOrElse(position.index) { ControlSlot.EMPTY }
+                is SlotPosition.MiddleLeft -> config.middleLeftSlot
                 is SlotPosition.BottomLeft ->
                     config.bottomLeftSlots.getOrElse(position.index) { ControlSlot.EMPTY }
                 is SlotPosition.BottomRight ->
@@ -157,6 +161,8 @@ class CustomizationViewModel @Inject constructor(
                 config.copy(topRightSlots = config.topRightSlots.setAt(position.index, slot))
             is SlotPosition.Center ->
                 config.copy(centerSlots = config.centerSlots.setAt(position.index, slot))
+            is SlotPosition.MiddleLeft ->
+                config.copy(middleLeftSlot = slot)
             is SlotPosition.BottomLeft ->
                 config.copy(bottomLeftSlots = config.bottomLeftSlots.setAt(position.index, slot))
             is SlotPosition.BottomRight ->

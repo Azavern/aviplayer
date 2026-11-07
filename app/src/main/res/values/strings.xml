@@ -74,6 +74,7 @@
     <string name="area_top_left">Atas Kiri</string>
     <string name="area_top_right">Atas Kanan</string>
     <string name="area_center">Tengah</string>
+    <string name="area_middle_left">Kiri Tengah</string>
     <string name="area_bottom_left">Bawah Kiri</string>
     <string name="area_bottom_right">Bawah Kanan</string>
     <string name="slot_play_pause">Putar/Jeda</string>
@@ -88,6 +89,8 @@
     <string name="slot_empty">Kosong</string>
     <string name="player_action_mute">Bisu</string>
     <string name="player_action_unmute">Bunyikan</string>
+    <string name="player_action_lock">Kunci kontrol</string>
+    <string name="player_action_unlock">Buka kunci kontrol</string>
     <string name="controls_editor_top_left_locked">Area kiri atas (tombol kembali dan judul) terkunci — selalu tetap dan tidak bisa ditukar.</string>
     <string name="controls_seek_title">Durasi Lewati (Double Tap)</string>
     <string name="controls_seek_forward">Maju</string>

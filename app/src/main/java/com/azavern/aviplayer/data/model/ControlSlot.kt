@@ -7,9 +7,10 @@ import kotlinx.serialization.Serializable
  * (Blueprint Bagian 8). Diserialkan sebagai nama enum di JSON layout.
  *
  * Yang sudah berfungsi: PLAY_PAUSE, PREVIOUS, NEXT, ORIENTATION,
- * CAPTURE, SPEED, dan MUTE (tombol bisu, tambahan Veo 2026-11-04).
- * LOCK dan SCREEN_RATIO menunggu milestone fiturnya; keduanya
- * tidak ditawarkan editor dan tidak dirender player (slot-nya
+ * CAPTURE, SPEED, MUTE (tombol bisu, tambahan Veo 2026-11-04), dan
+ * LOCK (kunci kontrol, fitur Veo 2026-11-07 — rumah bawaannya di
+ * area kiri tengah layar). SCREEN_RATIO masih menunggu fiturnya;
+ * ia tidak ditawarkan editor dan tidak dirender player (slot-nya
  * diperlakukan seperti EMPTY).
  */
 @Serializable

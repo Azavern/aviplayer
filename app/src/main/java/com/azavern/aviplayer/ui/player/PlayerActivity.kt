@@ -127,7 +127,8 @@ class PlayerActivity : ComponentActivity() {
                     onTogglePlayPause = viewModel::togglePlayPause,
                     onCaptureClick = viewModel::captureFrame,
                     onCaptureResultConsumed = viewModel::onCaptureResultConsumed,
-                    onMuteClick = viewModel::toggleMute
+                    onMuteClick = viewModel::toggleMute,
+                    onLockClick = viewModel::toggleLock
                 )
             }
         }

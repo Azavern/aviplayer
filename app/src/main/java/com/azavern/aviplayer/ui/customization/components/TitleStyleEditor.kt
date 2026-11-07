@@ -195,7 +195,7 @@ fun TitleStyleEditor(
                 titleConfig = titleConfig,
                 topRightSlots = emptyList(),
                 uiState = PlayerUiState(),
-                actions = PlayerControlActions({}, {}, {}, {}, {}, {}, {}),
+                actions = PlayerControlActions({}, {}, {}, {}, {}, {}, {}, {}),
                 onBackClick = {}
             )
         }

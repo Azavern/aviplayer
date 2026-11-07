@@ -2,6 +2,8 @@ package com.azavern.aviplayer.ui.player.components
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.LockOpen
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -40,7 +42,8 @@ data class PlayerControlActions(
     val onRotate: () -> Unit,
     val onCapture: () -> Unit,
     val onSpeed: () -> Unit,
-    val onMute: () -> Unit
+    val onMute: () -> Unit,
+    val onLock: () -> Unit
 )
 
 /**
@@ -52,7 +55,7 @@ data class PlayerControlActions(
  *
  * NEXT aktif hanya bila antrean konteks masih punya video
  * berikutnya (uiState.hasNext, Milestone 10); di ujung antrean ia
- * kembali redup dan nonaktif. LOCK, SCREEN_RATIO, dan EMPTY tidak
+ * kembali redup dan nonaktif. SCREEN_RATIO dan EMPTY tidak
  * dirender (fitur belum ada / slot kosong).
  */
 @Composable
@@ -152,6 +155,20 @@ fun ControlSlotButton(
             )
         }
 
-        ControlSlot.LOCK, ControlSlot.SCREEN_RATIO, ControlSlot.EMPTY -> Unit
+        ControlSlot.LOCK -> IconButton(onClick = actions.onLock, modifier = modifier) {
+            Icon(
+                imageVector = if (uiState.isLocked) Icons.Rounded.Lock else Icons.Rounded.LockOpen,
+                contentDescription = stringResource(
+                    if (uiState.isLocked) {
+                        R.string.player_action_unlock
+                    } else {
+                        R.string.player_action_lock
+                    }
+                ),
+                tint = Color.White
+            )
+        }
+
+        ControlSlot.SCREEN_RATIO, ControlSlot.EMPTY -> Unit
     }
 }

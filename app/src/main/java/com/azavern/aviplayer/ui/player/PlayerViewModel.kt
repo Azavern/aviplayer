@@ -277,6 +277,15 @@ class PlayerViewModel @Inject constructor(
     }
 
     /**
+     * Tombol kunci kontrol (fitur LOCK, Veo 2026-11-07): mengunci /
+     * membuka kunci sentuhan player. Pemutaran tidak terpengaruh;
+     * yang berubah hanya lapisan interaksi di PlayerScreen.
+     */
+    fun toggleLock() {
+        _uiState.update { it.copy(isLocked = !it.isLocked) }
+    }
+
+    /**
      * Terapkan level kecerahan baru dari gesture (diteruskan
      * PlayerActivity ke window). Ini SATU-SATUNYA jalan kecerahan
      * window diubah aplikasi — tidak ada penerapan otomatis.

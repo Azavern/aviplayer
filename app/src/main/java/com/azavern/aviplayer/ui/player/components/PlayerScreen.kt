@@ -1,6 +1,7 @@
 package com.azavern.aviplayer.ui.player.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,8 +35,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.media3.exoplayer.ExoPlayer
+import com.azavern.aviplayer.data.model.ControlSlot
 import com.azavern.aviplayer.player.core.PlayerState
 import com.azavern.aviplayer.ui.player.CaptureResult
 import com.azavern.aviplayer.ui.player.PlayerUiState
@@ -52,6 +55,12 @@ import kotlinx.coroutines.delay
  * atas dan gugus bawah meluncur ke bawah keluar layar. Saat jeda
  * kontrol selalu tampil. Ketuk sekali di area bukan tombol (lewat
  * GestureOverlay) membalik tampil/sembunyi kapan pun.
+ *
+ * Mode TERKUNCI (fitur LOCK, Veo 2026-11-07): semua kontrol dan
+ * gesture mati; yang tersisa hanya tombol melayang di kiri tengah
+ * layar (area layout kiri tengah, bawaan LOCK) yang berubah menjadi
+ * tombol buka kunci — tampil sebentar sesudah mengunci lalu
+ * memudar, dan muncul lagi setiap layar diketuk.
  *
  * Stateless untuk state player: semua state dari [uiState], semua
  * aksi lewat callback. Visibilitas kontrol adalah state lokal layar.
@@ -78,6 +87,7 @@ fun PlayerScreen(
     onCaptureClick: () -> Unit,
     onCaptureResultConsumed: () -> Unit,
     onMuteClick: () -> Unit,
+    onLockClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     // Lencana hasil capture tampil ±1,5 detik, lalu state dibersihkan
@@ -111,6 +121,21 @@ fun PlayerScreen(
         }
     }
 
+    // ---- Mode terkunci (LOCK) ----
+    // Tombol buka kunci tampil sesudah mengunci, memudar sesudah
+    // 3 detik, dan muncul lagi setiap layar diketuk (lapisan
+    // penangkap ketuk di bawah).
+    var lockButtonVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(uiState.isLocked) {
+        if (uiState.isLocked) lockButtonVisible = true
+    }
+    LaunchedEffect(uiState.isLocked, lockButtonVisible) {
+        if (uiState.isLocked && lockButtonVisible) {
+            delay(3_000)
+            lockButtonVisible = false
+        }
+    }
+
     val controlActions = PlayerControlActions(
         onPlayPause = { noteInteraction(); onPlayPauseClick() },
         onPrevious = { noteInteraction(); onPreviousClick() },
@@ -118,7 +143,8 @@ fun PlayerScreen(
         onRotate = { noteInteraction(); onRotateClick() },
         onCapture = { noteInteraction(); onCaptureClick() },
         onSpeed = { noteInteraction(); onSpeedClick() },
-        onMute = { noteInteraction(); onMuteClick() }
+        onMute = { noteInteraction(); onMuteClick() },
+        onLock = { noteInteraction(); onLockClick() }
     )
     val layout = uiState.playerUiConfig.controlLayoutConfig
 
@@ -133,23 +159,35 @@ fun PlayerScreen(
         )
 
         // Lapisan gesture Milestone 5: di atas video, di bawah kontrol,
-        // sehingga tombol tetap menerima sentuhannya sendiri.
-        GestureOverlay(
-            uiState = uiState,
-            onBrightnessChange = { noteInteraction(); onBrightnessChange(it) },
-            onVolumeChange = { noteInteraction(); onVolumeChange(it) },
-            onSeekPreview = { noteInteraction(); onSeekPreview(it) },
-            onSeekCommit = { noteInteraction(); onSeekCommit() },
-            onSeekClear = onSeekClear,
-            onSeekForward = { noteInteraction(); onGestureSeekForward() },
-            onSeekBackward = { noteInteraction(); onGestureSeekBackward() },
-            onTogglePlayPause = { noteInteraction(); onTogglePlayPause() },
-            onSingleTap = {
-                controlsVisible = !controlsVisible
-                noteInteraction()
-            },
-            modifier = Modifier.fillMaxSize()
-        )
+        // sehingga tombol tetap menerima sentuhannya sendiri. Saat
+        // TERKUNCI lapisan ini diganti penangkap ketuk polos yang
+        // satu-satunya fungsinya memunculkan lagi tombol buka kunci.
+        if (uiState.isLocked) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectTapGestures { lockButtonVisible = true }
+                    }
+            )
+        } else {
+            GestureOverlay(
+                uiState = uiState,
+                onBrightnessChange = { noteInteraction(); onBrightnessChange(it) },
+                onVolumeChange = { noteInteraction(); onVolumeChange(it) },
+                onSeekPreview = { noteInteraction(); onSeekPreview(it) },
+                onSeekCommit = { noteInteraction(); onSeekCommit() },
+                onSeekClear = onSeekClear,
+                onSeekForward = { noteInteraction(); onGestureSeekForward() },
+                onSeekBackward = { noteInteraction(); onGestureSeekBackward() },
+                onTogglePlayPause = { noteInteraction(); onTogglePlayPause() },
+                onSingleTap = {
+                    controlsVisible = !controlsVisible
+                    noteInteraction()
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
 
         when (val state = uiState.playerState) {
             PlayerState.Loading -> CircularProgressIndicator(
@@ -169,7 +207,7 @@ fun PlayerScreen(
 
         // Bar atas: meluncur ke atas keluar layar saat kontrol sembunyi.
         AnimatedVisibility(
-            visible = controlsVisible,
+            visible = controlsVisible && !uiState.isLocked,
             enter = slideInVertically { -it } + fadeIn(),
             exit = slideOutVertically { -it } + fadeOut(),
             modifier = Modifier.align(Alignment.TopCenter)
@@ -217,10 +255,30 @@ fun PlayerScreen(
             }
         }
 
+        // Tombol melayang kiri tengah (area layout kiri tengah;
+        // bawaan LOCK). Tidak terkunci: isinya slot layout dan ia
+        // ikut tampil/sembunyi bersama kontrol lain. Terkunci: ia
+        // satu-satunya yang tersisa dan selalu tombol LOCK (buka
+        // kunci) di posisi ini, apa pun isi slot layout-nya.
+        AnimatedVisibility(
+            visible = if (uiState.isLocked) lockButtonVisible else controlsVisible,
+            enter = slideInHorizontally { -it } + fadeIn(),
+            exit = slideOutHorizontally { -it } + fadeOut(),
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .padding(start = 8.dp)
+        ) {
+            ControlSlotButton(
+                slot = if (uiState.isLocked) ControlSlot.LOCK else layout.middleLeftSlot,
+                uiState = uiState,
+                actions = controlActions
+            )
+        }
+
         // Gugus bawah (seekbar + tombol): meluncur ke bawah keluar
         // layar saat kontrol sembunyi.
         AnimatedVisibility(
-            visible = controlsVisible,
+            visible = controlsVisible && !uiState.isLocked,
             enter = slideInVertically { it } + fadeIn(),
             exit = slideOutVertically { it } + fadeOut(),
             modifier = Modifier.align(Alignment.BottomCenter)

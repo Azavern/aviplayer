@@ -37,6 +37,12 @@ data class PlayerUiState(
     val playbackSpeed: Float = 1.0f,
     /** Player sedang dibisukan lewat tombol bisu (volume player 0). */
     val isMuted: Boolean = false,
+    /**
+     * Kontrol player terkunci (fitur LOCK, Veo 2026-11-07): semua
+     * gesture dan tombol mati; yang tersisa hanya tombol buka kunci
+     * melayang di kiri tengah layar.
+     */
+    val isLocked: Boolean = false,
     /** Level kecerahan jendela 0f..1f; -1f = ikuti sistem (Milestone 5). */
     val brightnessLevel: Float = -1f,
     /**
