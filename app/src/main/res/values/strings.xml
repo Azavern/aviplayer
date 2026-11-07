@@ -91,6 +91,11 @@
     <string name="player_action_unmute">Bunyikan</string>
     <string name="player_action_lock">Kunci kontrol</string>
     <string name="player_action_unlock">Buka kunci kontrol</string>
+    <string name="player_action_playback_mode">Mode putar</string>
+    <string name="playback_mode_loop_all">Ulang Semua</string>
+    <string name="playback_mode_shuffle">Acak Semua</string>
+    <string name="playback_mode_single_loop">Ulang Satu Video</string>
+    <string name="playback_mode_single_play">Sekali Putar, Lalu Tutup</string>
     <string name="controls_editor_top_left_locked">Area kiri atas (tombol kembali dan judul) terkunci — selalu tetap dan tidak bisa ditukar.</string>
     <string name="controls_seek_title">Durasi Lewati (Double Tap)</string>
     <string name="controls_seek_forward">Maju</string>

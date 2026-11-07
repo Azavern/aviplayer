@@ -6,13 +6,16 @@ import kotlinx.serialization.Serializable
  * Tata letak slot tombol player (Blueprint Bagian 8), disimpan
  * sebagai JSON di DataStore (key CONTROL_LAYOUT_JSON).
  *
- * Ukuran area bawah TETAP (spek Veo 2026-11-04): kiri bawah selalu
- * 3 slot, kanan bawah selalu 2 slot — kekurangan diisi EMPTY.
+ * Ukuran area bawah TETAP: kiri bawah dan kanan bawah masing-masing
+ * selalu 2 slot — kekurangan diisi EMPTY (spek awal Veo 2026-11-04
+ * kiri bawah 3 slot, dikoreksi 2026-11-07 menjadi 2+2 supaya baris
+ * bawah total 7 slot bersama klaster tengah dan perilaku UI tidak
+ * perlu dibedakan antara portrait dan landscape).
  * Susunan bawaan:
  *
- * | kiri bawah          | kanan bawah       |
- * |---------------------|-------------------|
- * | Bisu, Kamera, Kosong | Kecepatan, Rotasi |
+ * | kiri bawah   | kanan bawah       |
+ * |--------------|-------------------|
+ * | Bisu, Kamera | Kecepatan, Rotasi |
  *
  * Kecepatan duduk di samping Rotasi, dan Rotasi selalu paling
  * pojok kanan. Klaster tengah tetap prev/play/next. Ini
@@ -39,7 +42,7 @@ data class ControlLayoutConfig(
     ),
     val middleLeftSlot: ControlSlot = ControlSlot.LOCK,
     val bottomLeftSlots: List<ControlSlot> = listOf(
-        ControlSlot.MUTE, ControlSlot.CAPTURE, ControlSlot.EMPTY
+        ControlSlot.MUTE, ControlSlot.CAPTURE
     ),
     val bottomRightSlots: List<ControlSlot> = listOf(
         ControlSlot.SPEED, ControlSlot.ORIENTATION
@@ -138,8 +141,8 @@ data class ControlLayoutConfig(
     companion object {
         val Default = ControlLayoutConfig()
 
-        /** Jumlah slot tetap area kiri bawah (spek Veo 2026-11-04). */
-        const val BOTTOM_LEFT_SIZE = 3
+        /** Jumlah slot tetap area kiri bawah (spek Veo 2026-11-07: 2, sebelumnya 3). */
+        const val BOTTOM_LEFT_SIZE = 2
 
         /** Jumlah slot tetap area kanan bawah (spek Veo 2026-11-04). */
         const val BOTTOM_RIGHT_SIZE = 2

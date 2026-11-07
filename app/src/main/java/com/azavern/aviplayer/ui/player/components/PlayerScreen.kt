@@ -39,6 +39,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.media3.exoplayer.ExoPlayer
 import com.azavern.aviplayer.data.model.ControlSlot
+import com.azavern.aviplayer.data.model.PlaybackMode
 import com.azavern.aviplayer.player.core.PlayerState
 import com.azavern.aviplayer.ui.player.CaptureResult
 import com.azavern.aviplayer.ui.player.PlayerUiState
@@ -88,6 +89,7 @@ fun PlayerScreen(
     onCaptureResultConsumed: () -> Unit,
     onMuteClick: () -> Unit,
     onLockClick: () -> Unit,
+    onPlaybackModeSelected: (PlaybackMode) -> Unit,
     modifier: Modifier = Modifier
 ) {
     // Lencana hasil capture tampil ±1,5 detik, lalu state dibersihkan
@@ -218,7 +220,9 @@ fun PlayerScreen(
                 topRightSlots = layout.topRightSlots,
                 uiState = uiState,
                 actions = controlActions,
-                onBackClick = onBackClick
+                onBackClick = onBackClick,
+                playbackMode = uiState.playbackMode,
+                onPlaybackModeSelected = onPlaybackModeSelected
             )
         }
 

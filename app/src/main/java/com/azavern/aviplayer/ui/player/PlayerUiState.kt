@@ -2,6 +2,7 @@ package com.azavern.aviplayer.ui.player
 
 import android.net.Uri
 import com.azavern.aviplayer.data.model.OrientationMode
+import com.azavern.aviplayer.data.model.PlaybackMode
 import com.azavern.aviplayer.data.model.PlayerUiConfig
 import com.azavern.aviplayer.data.model.ThemeConfig
 import com.azavern.aviplayer.player.core.PlayerState
@@ -43,6 +44,13 @@ data class PlayerUiState(
      * melayang di kiri tengah layar.
      */
     val isLocked: Boolean = false,
+    /** Mode putar antrean aktif (menu titik tiga; bawaan LOOP_ALL). */
+    val playbackMode: PlaybackMode = PlaybackMode.LOOP_ALL,
+    /**
+     * Permintaan tutup player dari mode SINGLE_PLAY sesudah video
+     * berakhir; dikonsumsi PlayerActivity (finish), tidak direset.
+     */
+    val closePlayerRequested: Boolean = false,
     /** Level kecerahan jendela 0f..1f; -1f = ikuti sistem (Milestone 5). */
     val brightnessLevel: Float = -1f,
     /**

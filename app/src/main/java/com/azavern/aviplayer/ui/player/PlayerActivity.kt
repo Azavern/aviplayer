@@ -83,6 +83,12 @@ class PlayerActivity : ComponentActivity() {
                     }
                 }
 
+                // Mode SINGLE_PLAY (menu titik tiga): video berakhir
+                // → ViewModel meminta tutup; Activity yang menutup.
+                LaunchedEffect(uiState.closePlayerRequested) {
+                    if (uiState.closePlayerRequested) finish()
+                }
+
                 // Gesture Milestone 5: volume di state diterapkan ke
                 // AudioManager di sini; ViewModel tidak menyentuh sistem.
                 // Kecerahan HANYA diterapkan bila pengguna mengubahnya
@@ -128,7 +134,8 @@ class PlayerActivity : ComponentActivity() {
                     onCaptureClick = viewModel::captureFrame,
                     onCaptureResultConsumed = viewModel::onCaptureResultConsumed,
                     onMuteClick = viewModel::toggleMute,
-                    onLockClick = viewModel::toggleLock
+                    onLockClick = viewModel::toggleLock,
+                    onPlaybackModeSelected = viewModel::setPlaybackMode
                 )
             }
         }

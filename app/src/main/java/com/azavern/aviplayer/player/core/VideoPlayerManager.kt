@@ -3,6 +3,7 @@ package com.azavern.aviplayer.player.core
 import android.content.Context
 import android.net.Uri
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 
 /**
@@ -82,6 +83,20 @@ class VideoPlayerManager(private val context: Context) {
      */
     fun setMuted(muted: Boolean) {
         exoPlayer?.volume = if (muted) 0f else 1f
+    }
+
+    /**
+     * Ulangi satu video terus-menerus (mode putar SINGLE_LOOP):
+     * memakai repeat bawaan ExoPlayer, jadi STATE_ENDED tidak
+     * terpicu dan perulangan berjalan mulus tanpa siapkan ulang.
+     * Wajib diterapkan ulang sesudah [prepare] seperti [setMuted].
+     */
+    fun setRepeatOne(enabled: Boolean) {
+        exoPlayer?.repeatMode = if (enabled) {
+            Player.REPEAT_MODE_ONE
+        } else {
+            Player.REPEAT_MODE_OFF
+        }
     }
 
     fun getCurrentPosition(): Long = exoPlayer?.currentPosition ?: 0L

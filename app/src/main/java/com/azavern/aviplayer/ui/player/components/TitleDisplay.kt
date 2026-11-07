@@ -16,6 +16,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.azavern.aviplayer.R
 import com.azavern.aviplayer.data.model.ControlSlot
+import com.azavern.aviplayer.data.model.PlaybackMode
 import com.azavern.aviplayer.data.model.TitleConfig
 import com.azavern.aviplayer.ui.player.PlayerUiState
 import kotlinx.coroutines.delay
@@ -70,6 +75,11 @@ import java.util.Locale
  * sebelum/sesudahnya — area ini tetap, hanya gaya judulnya yang
  * bisa diubah (tab Judul). Slot kiri atas sudah tidak dirender di
  * sini; layout lama yang menyimpannya dibersihkan SettingsRepository.
+ *
+ * Tombol TITIK TIGA TETAP di pojok kanan atas (keputusan Veo
+ * 2026-11-07): selalu paling ujung kanan, bukan slot layout dan
+ * tidak bisa ditukar. Isinya menu mode putar (4 mode, yang aktif
+ * ditandai centang).
  */
 @Composable
 fun TitleDisplay(
@@ -79,8 +89,11 @@ fun TitleDisplay(
     uiState: PlayerUiState,
     actions: PlayerControlActions,
     onBackClick: () -> Unit,
+    playbackMode: PlaybackMode,
+    onPlaybackModeSelected: (PlaybackMode) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var modeMenuOpen by remember { mutableStateOf(false) }
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -123,7 +136,54 @@ fun TitleDisplay(
                 ControlSlotButton(slot = slot, uiState = uiState, actions = actions)
             }
         }
+        // Titik tiga tetap: jangkar menu mode putar.
+        Box {
+            IconButton(onClick = { modeMenuOpen = true }) {
+                Icon(
+                    imageVector = Icons.Rounded.MoreVert,
+                    contentDescription = stringResource(R.string.player_action_playback_mode),
+                    tint = Color.White
+                )
+            }
+            DropdownMenu(
+                expanded = modeMenuOpen,
+                onDismissRequest = { modeMenuOpen = false }
+            ) {
+                PlaybackMode.entries.forEach { mode ->
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = stringResource(playbackModeLabelRes(mode)),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        },
+                        onClick = {
+                            modeMenuOpen = false
+                            onPlaybackModeSelected(mode)
+                        },
+                        leadingIcon = if (mode == playbackMode) {
+                            {
+                                Icon(
+                                    imageVector = Icons.Rounded.Check,
+                                    contentDescription = null
+                                )
+                            }
+                        } else {
+                            null
+                        }
+                    )
+                }
+            }
+        }
     }
+}
+
+/** Label menu untuk tiap mode putar. */
+private fun playbackModeLabelRes(mode: PlaybackMode): Int = when (mode) {
+    PlaybackMode.LOOP_ALL -> R.string.playback_mode_loop_all
+    PlaybackMode.SHUFFLE -> R.string.playback_mode_shuffle
+    PlaybackMode.SINGLE_LOOP -> R.string.playback_mode_single_loop
+    PlaybackMode.SINGLE_PLAY -> R.string.playback_mode_single_play
 }
 
 /**

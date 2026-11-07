@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.C
 import androidx.media3.common.Player
 import com.azavern.aviplayer.data.model.OrientationMode
+import com.azavern.aviplayer.data.model.PlaybackMode
 import com.azavern.aviplayer.data.repository.PlaybackRepository
 import com.azavern.aviplayer.data.repository.SettingsRepository
 import com.azavern.aviplayer.player.core.PlayerEvent
@@ -125,7 +126,7 @@ class PlayerViewModel @Inject constructor(
                 playerState = PlayerState.Loading,
                 currentPositionMs = 0L,
                 durationMs = 0L,
-                hasNext = queueIndex < queue.lastIndex,
+                hasNext = computeHasNext(queueIndex, it.playbackMode),
                 hasPrevious = queueIndex > 0
             )
         }
@@ -143,6 +144,7 @@ class PlayerViewModel @Inject constructor(
             playerManager.prepare(path, startPositionMs = lastPosition)
             playerManager.setSpeed(_uiState.value.playbackSpeed)
             playerManager.setMuted(_uiState.value.isMuted)
+            applyRepeatMode()
             startPositionTicker()
         }
     }
@@ -155,6 +157,7 @@ class PlayerViewModel @Inject constructor(
             playerManager.prepare(state.videoPath, startPositionMs = state.currentPositionMs)
             playerManager.setSpeed(state.playbackSpeed)
             playerManager.setMuted(state.isMuted)
+            applyRepeatMode()
             startPositionTicker()
         }
     }
@@ -193,9 +196,17 @@ class PlayerViewModel @Inject constructor(
         }
     }
 
-    /** Tombol NEXT (Milestone 10): pindah ke video berikutnya di antrean. */
+    /**
+     * Tombol NEXT (Milestone 10): pindah ke video berikutnya di
+     * antrean. Perilakunya mengikuti mode putar — LOOP_ALL membungkus
+     * ke awal, SHUFFLE melompat acak; mode lain berhenti di ujung.
+     */
     fun onNext() {
-        if (queueIndex < queue.lastIndex) playQueueItem(queueIndex + 1)
+        when (_uiState.value.playbackMode) {
+            PlaybackMode.LOOP_ALL -> advanceWrapped()
+            PlaybackMode.SHUFFLE -> advanceShuffle()
+            else -> if (queueIndex < queue.lastIndex) playQueueItem(queueIndex + 1)
+        }
     }
 
     /**
@@ -230,7 +241,7 @@ class PlayerViewModel @Inject constructor(
                 playerState = PlayerState.Loading,
                 currentPositionMs = 0L,
                 durationMs = 0L,
-                hasNext = index < queue.lastIndex,
+                hasNext = computeHasNext(index, it.playbackMode),
                 hasPrevious = index > 0,
                 seekPreviewMs = null,
                 captureResult = null
@@ -247,6 +258,7 @@ class PlayerViewModel @Inject constructor(
             playerManager.prepare(item.path, startPositionMs = lastPosition)
             playerManager.setSpeed(_uiState.value.playbackSpeed)
             playerManager.setMuted(_uiState.value.isMuted)
+            applyRepeatMode()
         }
     }
 
@@ -283,6 +295,68 @@ class PlayerViewModel @Inject constructor(
      */
     fun toggleLock() {
         _uiState.update { it.copy(isLocked = !it.isLocked) }
+    }
+
+    // ---- Mode putar (menu titik tiga, Veo 2026-11-07) ----
+
+    /**
+     * Ganti mode putar dari menu titik tiga. SINGLE_LOOP menerapkan
+     * repeat bawaan ExoPlayer saat itu juga; mode lain mematikannya.
+     * hasNext ikut dihitung ulang karena mode memutar (LOOP_ALL /
+     * SHUFFLE) selalu punya video berikutnya selama antrean > 1.
+     */
+    fun setPlaybackMode(mode: PlaybackMode) {
+        _uiState.update {
+            it.copy(playbackMode = mode, hasNext = computeHasNext(queueIndex, mode))
+        }
+        applyRepeatMode()
+    }
+
+    /** Terapkan repeat ExoPlayer sesuai mode berjalan (pola setMuted: ulang sesudah prepare). */
+    private fun applyRepeatMode() {
+        playerManager.setRepeatOne(
+            _uiState.value.playbackMode == PlaybackMode.SINGLE_LOOP
+        )
+    }
+
+    /** NEXT aktif untuk [index] pada [mode]: mode memutar tak pernah mentok di ujung antrean. */
+    private fun computeHasNext(index: Int, mode: PlaybackMode): Boolean =
+        when (mode) {
+            PlaybackMode.LOOP_ALL, PlaybackMode.SHUFFLE -> queue.size > 1
+            else -> index < queue.lastIndex
+        }
+
+    /** Video berakhir: lanjut sesuai mode putar. */
+    private fun onPlaybackEnded() {
+        when (_uiState.value.playbackMode) {
+            PlaybackMode.LOOP_ALL -> advanceWrapped()
+            PlaybackMode.SHUFFLE -> advanceShuffle()
+            // Repeat ExoPlayer menangani mode ini; STATE_ENDED tidak terpicu.
+            PlaybackMode.SINGLE_LOOP -> Unit
+            PlaybackMode.SINGLE_PLAY ->
+                _uiState.update { it.copy(closePlayerRequested = true) }
+        }
+    }
+
+    /** Maju satu langkah membungkus ke awal antrean (LOOP_ALL); antrean tunggal = putar ulang. */
+    private fun advanceWrapped() {
+        if (queue.size <= 1) {
+            seekTo(0L)
+            play()
+        } else {
+            playQueueItem(if (queueIndex < queue.lastIndex) queueIndex + 1 else 0)
+        }
+    }
+
+    /** Maju ke video acak selain yang sedang diputar (SHUFFLE); antrean tunggal = putar ulang. */
+    private fun advanceShuffle() {
+        if (queue.size <= 1) {
+            seekTo(0L)
+            play()
+        } else {
+            val candidates = queue.indices.filter { it != queueIndex }
+            playQueueItem(candidates.random())
+        }
     }
 
     /**
@@ -452,10 +526,10 @@ class PlayerViewModel @Inject constructor(
                         durationMs = normalizedDuration()
                     )
                 }
-                // Video habis → lanjut otomatis ke video berikutnya di
-                // antrean (DoD Milestone 10); onNext berhenti sendiri
-                // bila sudah di ujung antrean.
-                if (event.playbackState == Player.STATE_ENDED) onNext()
+                // Video habis → lanjut sesuai mode putar (menu titik
+                // tiga): membungkus / acak / tutup player; SINGLE_LOOP
+                // ditangani repeat ExoPlayer sebelum sampai sini.
+                if (event.playbackState == Player.STATE_ENDED) onPlaybackEnded()
             }
             is PlayerEvent.IsPlayingChanged -> {
                 _uiState.update {
