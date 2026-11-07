@@ -97,6 +97,10 @@ class HomeActivity : ComponentActivity() {
                 .putStringArrayListExtra(
                     Constants.KEY_QUEUE_TITLES, ArrayList(navigation.queueTitles)
                 )
+                .putExtra(
+                    Constants.KEY_QUEUE_DURATIONS,
+                    navigation.queueDurations.toLongArray()
+                )
         )
     }
 }

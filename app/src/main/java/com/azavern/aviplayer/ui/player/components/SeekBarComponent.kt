@@ -54,7 +54,8 @@ fun SeekBarComponent(
     val displayPosition = scrubbingValue?.toLong() ?: previewPositionMs ?: positionMs
 
     Row(
-        modifier = modifier.padding(horizontal = 16.dp),
+        // Margin tepi diperlebar (perintah Veo 2026-11-07).
+        modifier = modifier.padding(horizontal = 22.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(

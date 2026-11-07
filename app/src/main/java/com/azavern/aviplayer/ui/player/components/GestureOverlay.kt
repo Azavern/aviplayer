@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import com.azavern.aviplayer.player.gesture.GestureZone
 import com.azavern.aviplayer.player.gesture.GestureZoneCalculator
 import com.azavern.aviplayer.ui.player.PlayerUiState
+import com.azavern.aviplayer.utils.Constants
 import com.azavern.aviplayer.utils.TimeUtils
 import kotlinx.coroutines.delay
 import kotlin.math.abs
@@ -75,6 +76,12 @@ import kotlin.math.roundToInt
  * diabaikan sepenuhnya, jadi gesture tidak berebut dengan kontrol.
  * Nilai level diterapkan PlayerActivity (window & AudioManager);
  * komponen ini hanya membaca state dan memanggil callback.
+ *
+ * Zona mati (perintah Veo 2026-11-07): sentuhan yang MULAI di pita
+ * atas layar (tarikan bar notifikasi HP / area judul + margin) atau
+ * di pita bawah (area seekbar + tombol) diabaikan sepenuhnya — dua
+ * area itu netral dari semua gesture di atas. Besarnya diatur di
+ * Constants (GESTURE_TOP_DEAD_ZONE_DP / GESTURE_BOTTOM_DEAD_ZONE_DP).
  */
 @Composable
 fun GestureOverlay(
@@ -113,6 +120,8 @@ fun GestureOverlay(
             .fillMaxSize()
             .pointerInput(Unit) {
                 val slop = viewConfiguration.touchSlop
+                val topDeadZonePx = Constants.GESTURE_TOP_DEAD_ZONE_DP.dp.toPx()
+                val bottomDeadZonePx = Constants.GESTURE_BOTTOM_DEAD_ZONE_DP.dp.toPx()
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = false)
                     if (down.isConsumed) return@awaitEachGesture
@@ -120,6 +129,13 @@ fun GestureOverlay(
                     val snapshot = stateRef.value
                     val startX = down.position.x
                     val startY = down.position.y
+                    // Zona mati: gesture yang mulai di pita atas/bawah
+                    // tidak diolah sama sekali (lihat KDoc di atas).
+                    if (startY < topDeadZonePx ||
+                        startY > size.height - bottomDeadZonePx
+                    ) {
+                        return@awaitEachGesture
+                    }
                     val zone = GestureZoneCalculator.getZone(startX, size.width.toFloat())
                     val startBrightness = snapshot.brightnessLevel.coerceIn(0f, 1f)
                     val startVolume = snapshot.volumeLevel

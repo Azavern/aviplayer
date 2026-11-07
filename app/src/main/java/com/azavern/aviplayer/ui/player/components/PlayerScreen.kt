@@ -13,6 +13,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -225,11 +226,18 @@ fun PlayerScreen(
             modifier = Modifier.align(Alignment.BottomCenter)
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
+                // Seekbar digeser turun mendekati baris tombol (perintah
+                // Veo 2026-11-07: ±50% dari jarak semula). Offset hanya
+                // memindah gambar + area sentuhnya, tinggi gugus tidak
+                // berubah; besarnya di Constants.PLAYER_SEEK_BAR_DROP_DP.
                 SeekBarComponent(
                     positionMs = uiState.currentPositionMs,
                     durationMs = uiState.durationMs,
                     onSeekTo = { noteInteraction(); onSeekTo(it) },
-                    previewPositionMs = uiState.seekPreviewMs
+                    previewPositionMs = uiState.seekPreviewMs,
+                    modifier = Modifier.offset(
+                        y = Constants.PLAYER_SEEK_BAR_DROP_DP.dp
+                    )
                 )
                 PlayerControls(
                     layout = layout,

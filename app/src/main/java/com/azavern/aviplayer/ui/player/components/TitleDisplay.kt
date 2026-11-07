@@ -84,7 +84,9 @@ fun TitleDisplay(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 4.dp, vertical = 2.dp),
+            // Margin tepi diperlebar (perintah Veo 2026-11-07): elemen
+            // melayang tidak lagi mepet tepi layar.
+            .padding(horizontal = 10.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = onBackClick) {

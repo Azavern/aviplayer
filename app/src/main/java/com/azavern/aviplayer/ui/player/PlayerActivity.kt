@@ -54,7 +54,13 @@ class PlayerActivity : ComponentActivity() {
             .orEmpty()
         val queueTitles = intent.getStringArrayListExtra(Constants.KEY_QUEUE_TITLES)
             .orEmpty()
-        viewModel.initPlayer(videoPath, videoId, videoTitle, queuePaths, queueTitles)
+        // Durasi antrean (Milestone 10+): syarat saringan titik resume
+        // di PlayerViewModel/PlaybackRepository (spek Veo 2026-11-07).
+        val queueDurations = intent.getLongArrayExtra(Constants.KEY_QUEUE_DURATIONS)
+            ?.toList().orEmpty()
+        viewModel.initPlayer(
+            videoPath, videoId, videoTitle, queuePaths, queueTitles, queueDurations
+        )
         viewModel.setSystemAutoRotate(readSystemAutoRotate())
         // Level awal gesture (Milestone 5) disinkronkan sebelum konten
         // digambar, supaya efek penerapan tidak melompat dari nilai bawaan.

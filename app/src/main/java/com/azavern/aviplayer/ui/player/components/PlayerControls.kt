@@ -35,7 +35,9 @@ fun PlayerControls(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 4.dp)
+            // Margin tepi diperlebar (perintah Veo 2026-11-07),
+            // termasuk napas ekstra di tepi bawah layar.
+            .padding(start = 14.dp, end = 14.dp, top = 4.dp, bottom = 10.dp)
     ) {
         Row(
             modifier = Modifier.align(Alignment.CenterStart),

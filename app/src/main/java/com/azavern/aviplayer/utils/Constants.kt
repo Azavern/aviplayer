@@ -10,6 +10,7 @@ object Constants {
     const val KEY_VIDEO_PATH = "extra_video_path"
     const val KEY_QUEUE_PATHS = "extra_queue_paths"
     const val KEY_QUEUE_TITLES = "extra_queue_titles"
+    const val KEY_QUEUE_DURATIONS = "extra_queue_durations"
     const val KEY_VIDEO_ID = "extra_video_id"
     const val KEY_VIDEO_TITLE = "extra_video_title"
 
@@ -35,6 +36,36 @@ object Constants {
     // ---- Nilai bawaan & perilaku (Blueprint Bagian 7 dan 9) ----
     const val DEFAULT_SEEK_STEP_MS = 10_000
     const val AUTO_HIDE_CONTROLS_DELAY_MS = 3_000L
+
+    // ---- Toleransi titik resume (spek Veo 2026-11-07) ----
+    // Konstanta GLOBAL untuk semua durasi video (bukan persentase):
+    // posisi berhenti di bawah RESUME_MIN_POSITION_MS dianggap video
+    // belum pernah diputar; posisi di dalam RESUME_END_MARGIN_MS
+    // terakhir dianggap video sudah selesai. RESUME_TOLERANCE_MS
+    // adalah napas 0,1 detik di kedua batas, menelan ketidakakuratan
+    // posisi player yang sesekali meleset sekian milidetik — tanpanya,
+    // posisi yang tersimpan mepet ujung membuat video tidak bisa
+    // diputar lagi (langsung berakhir lalu lompat ke video berikutnya).
+    const val RESUME_MIN_POSITION_MS = 2_000L
+    const val RESUME_END_MARGIN_MS = 3_000L
+    const val RESUME_TOLERANCE_MS = 100L
+
+    // ---- Zona mati gesture player (perintah Veo 2026-11-07) ----
+    // Drag/ketuk yang MULAI di dalam zona ini tidak memicu gesture
+    // apa pun (brightness/volume/seek/ketuk): tepi atas supaya tarikan
+    // bar notifikasi HP aman, tepi bawah supaya area seekbar + tombol
+    // netral. Satuan dp dari tepi layar.
+    // Atas ≈ tinggi bar judul (52) + margin 20.
+    const val GESTURE_TOP_DEAD_ZONE_DP = 72
+    // Bawah ≈ gugus seekbar + tombol (122) + margin 2.
+    const val GESTURE_BOTTOM_DEAD_ZONE_DP = 124
+
+    /**
+     * Jarak turun seekbar mendekati baris tombol di bawahnya (dp,
+     * perintah Veo 2026-11-07: turunkan ±50% dari jarak semula).
+     * Diubah dari PlayerScreen lewat Modifier.offset.
+     */
+    const val PLAYER_SEEK_BAR_DROP_DP = 14
 
     /** Folder tujuan simpan frame capture lewat MediaStore (API 29+). */
     const val CAPTURE_SAVE_FOLDER = "Pictures/AVP"

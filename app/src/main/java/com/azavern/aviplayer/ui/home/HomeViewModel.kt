@@ -284,7 +284,8 @@ class HomeViewModel @Inject constructor(
                     id = video.id,
                     title = video.name,
                     queuePaths = displayed.map { item -> item.path },
-                    queueTitles = displayed.map { item -> item.name }
+                    queueTitles = displayed.map { item -> item.name },
+                    queueDurations = displayed.map { item -> item.durationMs }
                 )
             )
         }
@@ -401,7 +402,8 @@ class HomeViewModel @Inject constructor(
                     id = com.azavern.aviplayer.utils.FileUtils.generateVideoId(startEntry.videoPath),
                     title = startEntry.videoTitle,
                     queuePaths = entries.map { entry -> entry.videoPath },
-                    queueTitles = entries.map { entry -> entry.videoTitle }
+                    queueTitles = entries.map { entry -> entry.videoTitle },
+                    queueDurations = entries.map { entry -> entry.durationMs }
                 )
             )
         }
@@ -467,7 +469,8 @@ class HomeViewModel @Inject constructor(
                     val position = playbackRepository.getLastPosition(video.id)
                     if (position > 0L) {
                         playbackRepository.savePosition(
-                            FileUtils.generateVideoId(newPath), newPath, position
+                            FileUtils.generateVideoId(newPath), newPath, position,
+                            video.durationMs
                         )
                         playbackRepository.deletePosition(video.id)
                     }
@@ -618,7 +621,8 @@ class HomeViewModel @Inject constructor(
                         id = selected.first().id,
                         title = selected.first().name,
                         queuePaths = selected.map { video -> video.path },
-                        queueTitles = selected.map { video -> video.name }
+                        queueTitles = selected.map { video -> video.name },
+                        queueDurations = selected.map { video -> video.durationMs }
                     )
                 )
             }

@@ -76,7 +76,7 @@ class PlayerViewModel @Inject constructor(
     private var initializedPath: String? = null
 
     /** Antrean konteks putar (Milestone 10): kelompok video asal buka. */
-    private data class QueueItem(val path: String, val title: String)
+    private data class QueueItem(val path: String, val title: String, val durationMs: Long)
 
     private var queue: List<QueueItem> = emptyList()
     private var queueIndex: Int = 0
@@ -86,7 +86,8 @@ class PlayerViewModel @Inject constructor(
         id: String,
         title: String,
         queuePaths: List<String> = emptyList(),
-        queueTitles: List<String> = emptyList()
+        queueTitles: List<String> = emptyList(),
+        queueDurations: List<Long> = emptyList()
     ) {
         loadPlayerUiConfig()
         // Bangun antrean dari konteks asal (daftar Beranda / isi folder /
@@ -94,10 +95,14 @@ class PlayerViewModel @Inject constructor(
         // dari pengirim, antrean = video ini saja.
         queue = if (queuePaths.isNotEmpty()) {
             queuePaths.mapIndexed { index, queuePath ->
-                QueueItem(queuePath, queueTitles.getOrElse(index) { "" })
+                QueueItem(
+                    queuePath,
+                    queueTitles.getOrElse(index) { "" },
+                    queueDurations.getOrElse(index) { 0L }
+                )
             }
         } else {
-            listOf(QueueItem(path, title))
+            listOf(QueueItem(path, title, 0L))
         }
         queueIndex = queue.indexOfFirst { it.path == path }
             .takeIf { it >= 0 } ?: 0
@@ -126,7 +131,14 @@ class PlayerViewModel @Inject constructor(
         }
         playerManager.setEventListener(PlayerEventListener { event -> onPlayerEvent(event) })
         viewModelScope.launch {
-            val lastPosition = playbackRepository.getLastPosition(effectiveId)
+            // Titik resume disaring terhadap durasi video ini: baris
+            // lama yang berhenti mepet ujung (bug Veo 2026-11-07)
+            // dibaca sebagai selesai → mulai dari 0, bukan langsung
+            // berakhir lalu lompat ke video berikutnya.
+            val lastPosition = playbackRepository.sanitizeResumePosition(
+                playbackRepository.getLastPosition(effectiveId),
+                queue.getOrNull(queueIndex)?.durationMs ?: 0L
+            )
             _uiState.update { it.copy(currentPositionMs = lastPosition) }
             playerManager.prepare(path, startPositionMs = lastPosition)
             playerManager.setSpeed(_uiState.value.playbackSpeed)
@@ -199,7 +211,12 @@ class PlayerViewModel @Inject constructor(
             val leavingId = leaving.videoId
             val leavingPath = leaving.videoPath
             viewModelScope.launch(NonCancellable) {
-                playbackRepository.savePosition(leavingId, leavingPath, leavingPosition)
+                // Player saat ini masih memegang video yang ditinggalkan,
+                // jadi durasinya adalah durasi video itu — syarat saringan
+                // resume di PlaybackRepository.
+                playbackRepository.savePosition(
+                    leavingId, leavingPath, leavingPosition, normalizedDuration()
+                )
             }
         }
         queueIndex = index
@@ -220,7 +237,12 @@ class PlayerViewModel @Inject constructor(
             )
         }
         viewModelScope.launch {
-            val lastPosition = playbackRepository.getLastPosition(newId)
+            // Sama seperti initPlayer: resume tujuan disaring terhadap
+            // durasinya supaya video yang berhenti mepet ujung bisa
+            // diputar lagi dari awal lewat tombol PREVIOUS.
+            val lastPosition = playbackRepository.sanitizeResumePosition(
+                playbackRepository.getLastPosition(newId), item.durationMs
+            )
             _uiState.update { it.copy(currentPositionMs = lastPosition) }
             playerManager.prepare(item.path, startPositionMs = lastPosition)
             playerManager.setSpeed(_uiState.value.playbackSpeed)
@@ -387,7 +409,9 @@ class PlayerViewModel @Inject constructor(
         _uiState.update { it.copy(currentPositionMs = position) }
         if (state.videoId.isNotBlank() && state.videoPath.isNotBlank()) {
             viewModelScope.launch(NonCancellable) {
-                playbackRepository.savePosition(state.videoId, state.videoPath, position)
+                playbackRepository.savePosition(
+                    state.videoId, state.videoPath, position, normalizedDuration()
+                )
             }
         }
         positionTicker?.cancel()

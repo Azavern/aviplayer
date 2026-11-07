@@ -90,6 +90,7 @@ sealed class HomeNavigation {
         val id: String,
         val title: String,
         val queuePaths: List<String> = emptyList(),
-        val queueTitles: List<String> = emptyList()
+        val queueTitles: List<String> = emptyList(),
+        val queueDurations: List<Long> = emptyList()
     ) : HomeNavigation()
 }
