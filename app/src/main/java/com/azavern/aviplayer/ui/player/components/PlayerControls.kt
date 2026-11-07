@@ -19,17 +19,24 @@ import com.azavern.aviplayer.ui.player.PlayerUiState
  * slot yang fiturnya belum ada tidak digambar.
  *
  * Susunan bawaan: tengah = sebelumnya / putar-jeda besar /
- * berikutnya; kiri bawah (tetap 2 slot, koreksi Veo 2026-11-07) =
- * bisu / kamera; kanan bawah (tetap 2 slot) = kecepatan / rotasi,
- * kecepatan di samping rotasi dan rotasi paling pojok. Pengguna
- * bisa menukar posisi tombol lewat layar Kustomisasi.
+ * berikutnya; kiri bawah (tetap 2 slot) = kunci / kamera (LOCK
+ * pindah dari kiri tengah, konsep fix Veo 2026-11-08); kanan bawah
+ * (tetap 2 slot) = kecepatan / rotasi, kecepatan di samping rotasi
+ * dan rotasi paling pojok. Pengguna bisa menukar posisi tombol
+ * lewat layar Kustomisasi.
+ *
+ * Mode [lockedOnly] (player terkunci): semua slot selain LOCK
+ * digambar sebagai spacer tak terlihat berukuran sama, sehingga
+ * tombol LOCK tetap duduk persis di posisi slotnya — yang
+ * menghilang hanya tombol-tombol di sekelilingnya.
  */
 @Composable
 fun PlayerControls(
     layout: ControlLayoutConfig,
     uiState: PlayerUiState,
     actions: PlayerControlActions,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    lockedOnly: Boolean = false
 ) {
     Box(
         modifier = modifier
@@ -43,7 +50,11 @@ fun PlayerControls(
             verticalAlignment = Alignment.CenterVertically
         ) {
             layout.bottomLeftSlots.forEach { slot ->
-                ControlSlotButton(slot = slot, uiState = uiState, actions = actions)
+                if (lockedOnly && slot != ControlSlot.LOCK) {
+                    ControlSlotSpacer(slot = slot)
+                } else {
+                    ControlSlotButton(slot = slot, uiState = uiState, actions = actions)
+                }
             }
         }
         Row(
@@ -51,12 +62,16 @@ fun PlayerControls(
             verticalAlignment = Alignment.CenterVertically
         ) {
             layout.centerSlots.forEach { slot ->
-                ControlSlotButton(
-                    slot = slot,
-                    uiState = uiState,
-                    actions = actions,
-                    prominent = slot == ControlSlot.PLAY_PAUSE
-                )
+                if (lockedOnly && slot != ControlSlot.LOCK) {
+                    ControlSlotSpacer(slot = slot, prominent = slot == ControlSlot.PLAY_PAUSE)
+                } else {
+                    ControlSlotButton(
+                        slot = slot,
+                        uiState = uiState,
+                        actions = actions,
+                        prominent = slot == ControlSlot.PLAY_PAUSE
+                    )
+                }
             }
         }
         Row(
@@ -64,7 +79,11 @@ fun PlayerControls(
             verticalAlignment = Alignment.CenterVertically
         ) {
             layout.bottomRightSlots.forEach { slot ->
-                ControlSlotButton(slot = slot, uiState = uiState, actions = actions)
+                if (lockedOnly && slot != ControlSlot.LOCK) {
+                    ControlSlotSpacer(slot = slot)
+                } else {
+                    ControlSlotButton(slot = slot, uiState = uiState, actions = actions)
+                }
             }
         }
     }

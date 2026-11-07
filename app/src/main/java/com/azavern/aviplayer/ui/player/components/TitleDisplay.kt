@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -68,7 +70,7 @@ import java.util.Locale
  *
  * Milestone 7: gaya teks judul mengikuti [TitleConfig] (ukuran,
  * baris, warna, tebal, marquee), dan slot atas-kanan layout kontrol
- * dirender di sini sesudah indikator baterai/jam.
+ * dirender di sini.
  *
  * Area KIRI ATAS TERKUNCI (perintah Veo 2026-11-04): panah kembali
  * selalu yang pertama dan tidak ada slot yang bisa menempati posisi
@@ -76,10 +78,16 @@ import java.util.Locale
  * bisa diubah (tab Judul). Slot kiri atas sudah tidak dirender di
  * sini; layout lama yang menyimpannya dibersihkan SettingsRepository.
  *
- * Tombol TITIK TIGA TETAP di pojok kanan atas (keputusan Veo
- * 2026-11-07): selalu paling ujung kanan, bukan slot layout dan
- * tidak bisa ditukar. Isinya menu mode putar (4 mode, yang aktif
- * ditandai centang).
+ * KONSEP FIX KANAN ATAS (perintah Veo 2026-11-08), urutan dari
+ * pojok ke tengah: (1) kotak baterai + jam — tetap, paling pojok;
+ * (2) tombol TITIK TIGA — tetap, bukan slot layout, isinya menu
+ * mode putar (4 mode, yang aktif ditandai centang); (3) slot kanan
+ * atas layout, bisa ditukar dari editor (bawaan Bisu).
+ *
+ * Mode [lockedOnly] (player terkunci): elemen tetap dan slot
+ * selain LOCK digelapkan total (alpha 0, nonaktif) atau diganti
+ * spacer, sehingga bila LOCK kebetulan tinggal di kanan atas ia
+ * tetap duduk persis di posisi slotnya sebagai tombol buka kunci.
  */
 @Composable
 fun TitleDisplay(
@@ -91,7 +99,8 @@ fun TitleDisplay(
     onBackClick: () -> Unit,
     playbackMode: PlaybackMode,
     onPlaybackModeSelected: (PlaybackMode) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    lockedOnly: Boolean = false
 ) {
     var modeMenuOpen by remember { mutableStateOf(false) }
     Row(
@@ -102,7 +111,11 @@ fun TitleDisplay(
             .padding(horizontal = 10.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(onClick = onBackClick) {
+        IconButton(
+            onClick = onBackClick,
+            enabled = !lockedOnly,
+            modifier = if (lockedOnly) Modifier.alpha(0f) else Modifier
+        ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                 contentDescription = stringResource(R.string.player_action_back),
@@ -129,16 +142,22 @@ fun TitleDisplay(
                         Modifier
                     }
                 )
+                .then(if (lockedOnly) Modifier.alpha(0f) else Modifier)
         )
-        SystemStatusIndicator()
         topRightSlots.forEach { slot ->
-            if (slot != ControlSlot.EMPTY) {
+            if (lockedOnly && slot != ControlSlot.LOCK) {
+                ControlSlotSpacer(slot = slot)
+            } else if (slot != ControlSlot.EMPTY) {
                 ControlSlotButton(slot = slot, uiState = uiState, actions = actions)
             }
         }
         // Titik tiga tetap: jangkar menu mode putar.
         Box {
-            IconButton(onClick = { modeMenuOpen = true }) {
+            IconButton(
+                onClick = { modeMenuOpen = true },
+                enabled = !lockedOnly,
+                modifier = if (lockedOnly) Modifier.alpha(0f) else Modifier
+            ) {
                 Icon(
                     imageVector = Icons.Rounded.MoreVert,
                     contentDescription = stringResource(R.string.player_action_playback_mode),
@@ -146,7 +165,7 @@ fun TitleDisplay(
                 )
             }
             DropdownMenu(
-                expanded = modeMenuOpen,
+                expanded = modeMenuOpen && !lockedOnly,
                 onDismissRequest = { modeMenuOpen = false }
             ) {
                 PlaybackMode.entries.forEach { mode ->
@@ -175,6 +194,10 @@ fun TitleDisplay(
                 }
             }
         }
+        // Kotak baterai + jam: tetap, paling pojok kanan atas.
+        SystemStatusIndicator(
+            modifier = if (lockedOnly) Modifier.alpha(0f) else Modifier
+        )
     }
 }
 
@@ -187,9 +210,11 @@ private fun playbackModeLabelRes(mode: PlaybackMode): Int = when (mode) {
 }
 
 /**
- * Baterai + jam dinding untuk bar atas player. Murni tampilan:
- * dibaca ulang tiap 20 detik dari sticky intent baterai dan jam
- * sistem; tidak menyentuh state player.
+ * Kotak baterai + jam dinding untuk pojok kanan atas player
+ * (konsep fix Veo 2026-11-08): SATU kotak bertumpuk — glyph
+ * baterai di atas TANPA angka persen, jam 24 jam di bawahnya.
+ * Murni tampilan: dibaca ulang tiap 20 detik dari sticky intent
+ * baterai dan jam sistem; tidak menyentuh state player.
  */
 @Composable
 private fun SystemStatusIndicator(modifier: Modifier = Modifier) {
@@ -211,23 +236,18 @@ private fun SystemStatusIndicator(modifier: Modifier = Modifier) {
         }
     }
 
-    Row(
-        modifier = modifier.padding(end = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
+    Column(
+        modifier = modifier.padding(start = 2.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (batteryPercent >= 0) {
             BatteryGlyph(percent = batteryPercent)
-            Text(
-                text = "$batteryPercent%",
-                color = Color.White,
-                style = MaterialTheme.typography.labelSmall,
-                modifier = Modifier.padding(start = 4.dp, end = 8.dp)
-            )
         }
         Text(
             text = timeLabel,
             color = Color.White,
-            style = MaterialTheme.typography.labelMedium
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.padding(top = 2.dp)
         )
     }
 }

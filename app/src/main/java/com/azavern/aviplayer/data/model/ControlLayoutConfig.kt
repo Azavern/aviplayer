@@ -13,9 +13,9 @@ import kotlinx.serialization.Serializable
  * perlu dibedakan antara portrait dan landscape).
  * Susunan bawaan:
  *
- * | kiri bawah   | kanan bawah       |
- * |--------------|-------------------|
- * | Bisu, Kamera | Kecepatan, Rotasi |
+ * | kanan atas | kiri bawah    | kanan bawah       |
+ * |------------|---------------|-------------------|
+ * | Bisu       | Kunci, Kamera | Kecepatan, Rotasi |
  *
  * Kecepatan duduk di samping Rotasi, dan Rotasi selalu paling
  * pojok kanan. Klaster tengah tetap prev/play/next. Ini
@@ -27,22 +27,28 @@ import kotlinx.serialization.Serializable
  * Field [topLeftSlot] dipertahankan hanya demi kompatibilitas JSON
  * lama — isinya selalu dikosongkan oleh [sanitized].
  *
- * Area KIRI TENGAH (perintah Veo 2026-11-07): satu slot melayang di
- * tepi kiri tengah layar, rumah bawaan tombol LOCK. Seperti area
- * lain ia bisa ditukar isinya dari editor. Field ini tambahan baru —
- * JSON lama yang belum punya field-nya terisi nilai bawaan (LOCK)
- * lewat nilai default serialisasi.
+ * KONSEP FIX KANAN ATAS (perintah Veo 2026-11-08): dari pojok ke
+ * tengah — (1) kotak baterai + jam, (2) tombol titik tiga, keduanya
+ * tetap dan digambar TitleDisplay; (3) slot kanan atas layout ini,
+ * yang bisa ditukar. Bawaan slot kanan atas adalah Bisu.
+ *
+ * Area KIRI TENGAH DIHAPUS (perintah Veo 2026-11-08, membatalkan
+ * penambahan 2026-11-07): tepi kiri/kanan tengah layar kembali
+ * kosong. Field middleLeftSlot sudah tidak ada di model; JSON
+ * tersimpan dari era itu tetap terbaca karena parser mengabaikan
+ * field tak dikenal, dan LOCK dilengkapi kembali oleh [sanitized]
+ * dari himpunan fungsional seperti tombol lain. Rumah bawaan LOCK
+ * sekarang kiri bawah.
  */
 @Serializable
 data class ControlLayoutConfig(
     val topLeftSlot: ControlSlot = ControlSlot.EMPTY,
-    val topRightSlots: List<ControlSlot> = emptyList(),
+    val topRightSlots: List<ControlSlot> = listOf(ControlSlot.MUTE),
     val centerSlots: List<ControlSlot> = listOf(
         ControlSlot.PREVIOUS, ControlSlot.PLAY_PAUSE, ControlSlot.NEXT
     ),
-    val middleLeftSlot: ControlSlot = ControlSlot.LOCK,
     val bottomLeftSlots: List<ControlSlot> = listOf(
-        ControlSlot.MUTE, ControlSlot.CAPTURE
+        ControlSlot.LOCK, ControlSlot.CAPTURE
     ),
     val bottomRightSlots: List<ControlSlot> = listOf(
         ControlSlot.SPEED, ControlSlot.ORIENTATION
@@ -70,9 +76,9 @@ data class ControlLayoutConfig(
      * - Kedua area bawah diisi EMPTY sampai ukurannya tetap; kanan
      *   bawah yang isinya cuma Rotasi mengisi EMPTY di DEPAN supaya
      *   Rotasi tetap di pojok.
-     * - Kiri tengah menampung tepat satu slot dan tidak dibiarkan
-     *   kosong: bila isinya bukan tombol fungsional dan LOCK masih
-     *   berada di antrean samping, LOCK pulang ke kiri tengah.
+     * - LOCK kini tombol samping biasa (sejak konsep fix 2026-11-08):
+     *   tidak ada lagi rumah khusus; ia mengalir seperti tombol lain
+     *   dan kelebihan antrean selalu berakhir di kanan atas.
      *   SCREEN_RATIO tetap dibuang — ia memang belum dirender.
      */
     fun sanitized(): ControlLayoutConfig {
@@ -87,20 +93,10 @@ data class ControlLayoutConfig(
 
         val center = take(centerSlots)
         val topRight = take(topRightSlots).toMutableList()
-        val middleLeftTaken = take(listOf(middleLeftSlot))
         val sidePool = take(bottomLeftSlots) + take(bottomRightSlots) +
             take(listOf(topLeftSlot))
         // Lengkapi himpunan: tombol fungsional yang belum muncul di mana pun.
         val remaining = (sidePool + functional.filter { it !in seen }).toMutableList()
-
-        val middleLeft = when {
-            middleLeftTaken.isNotEmpty() -> middleLeftTaken.first()
-            ControlSlot.LOCK in remaining -> {
-                remaining.remove(ControlSlot.LOCK)
-                ControlSlot.LOCK
-            }
-            else -> ControlSlot.EMPTY
-        }
 
         val right = mutableListOf<ControlSlot>()
         if (ControlSlot.SPEED in remaining) {
@@ -132,7 +128,6 @@ data class ControlLayoutConfig(
             topLeftSlot = ControlSlot.EMPTY,
             topRightSlots = topRight,
             centerSlots = center,
-            middleLeftSlot = middleLeft,
             bottomLeftSlots = leftPadded,
             bottomRightSlots = rightPadded
         )

@@ -1,6 +1,9 @@
 package com.azavern.aviplayer.ui.player.components
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.LockOpen
@@ -171,4 +174,26 @@ fun ControlSlotButton(
 
         ControlSlot.SCREEN_RATIO, ControlSlot.EMPTY -> Unit
     }
+}
+
+/**
+ * Pengganti tak terlihat sebuah slot pada mode terkunci: kotak
+ * kosong dengan JEJAK UKURAN yang sama seperti tombol aslinya di
+ * [ControlSlotButton] (IconButton 48dp; putar/jeda menonjol 64dp;
+ * tombol teks kecepatan ±56dp). Berkat spacer ini tombol LOCK yang
+ * sendirian tersisa tetap duduk PERSIS di posisi slotnya — ia tidak
+ * berpindah tempat saat player dikunci, tombol-tombol lainlah yang
+ * menghilang dari sekelilingnya (konsep Veo 2026-11-08). EMPTY dan
+ * SCREEN_RATIO memang tidak berjejak, sama seperti render aslinya.
+ */
+@Composable
+fun ControlSlotSpacer(slot: ControlSlot, prominent: Boolean = false) {
+    if (slot == ControlSlot.EMPTY || slot == ControlSlot.SCREEN_RATIO) return
+    val width = when {
+        prominent && slot == ControlSlot.PLAY_PAUSE -> 64.dp
+        slot == ControlSlot.SPEED -> 56.dp
+        else -> 48.dp
+    }
+    val height = if (prominent && slot == ControlSlot.PLAY_PAUSE) 64.dp else 48.dp
+    Box(Modifier.width(width).height(height))
 }

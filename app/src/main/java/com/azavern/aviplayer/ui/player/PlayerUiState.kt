@@ -40,8 +40,8 @@ data class PlayerUiState(
     val isMuted: Boolean = false,
     /**
      * Kontrol player terkunci (fitur LOCK, Veo 2026-11-07): semua
-     * gesture dan tombol mati; yang tersisa hanya tombol buka kunci
-     * melayang di kiri tengah layar.
+     * gesture dan tombol mati; yang tersisa hanya tombol LOCK itu
+     * sendiri, diam di posisi slotnya sebagai tombol buka kunci.
      */
     val isLocked: Boolean = false,
     /** Mode putar antrean aktif (menu titik tiga; bawaan LOOP_ALL). */

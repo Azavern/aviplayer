@@ -100,13 +100,6 @@ fun ControlSwapEditor(
             onSlotTapped = onSlotTapped
         )
         SlotAreaRow(
-            label = stringResource(R.string.area_middle_left),
-            slots = listOf(layout.middleLeftSlot),
-            positionOf = { SlotPosition.MiddleLeft },
-            selectedSlotA = selectedSlotA,
-            onSlotTapped = onSlotTapped
-        )
-        SlotAreaRow(
             label = stringResource(R.string.area_bottom_left),
             slots = layout.bottomLeftSlots.ifEmpty { listOf(ControlSlot.EMPTY) },
             positionOf = { index -> SlotPosition.BottomLeft(index) },

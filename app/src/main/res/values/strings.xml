@@ -74,7 +74,6 @@
     <string name="area_top_left">Atas Kiri</string>
     <string name="area_top_right">Atas Kanan</string>
     <string name="area_center">Tengah</string>
-    <string name="area_middle_left">Kiri Tengah</string>
     <string name="area_bottom_left">Bawah Kiri</string>
     <string name="area_bottom_right">Bawah Kanan</string>
     <string name="slot_play_pause">Putar/Jeda</string>

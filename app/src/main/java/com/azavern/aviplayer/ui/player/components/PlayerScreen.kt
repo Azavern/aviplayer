@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -58,10 +59,12 @@ import kotlinx.coroutines.delay
  * GestureOverlay) membalik tampil/sembunyi kapan pun.
  *
  * Mode TERKUNCI (fitur LOCK, Veo 2026-11-07): semua kontrol dan
- * gesture mati; yang tersisa hanya tombol melayang di kiri tengah
- * layar (area layout kiri tengah, bawaan LOCK) yang berubah menjadi
- * tombol buka kunci — tampil sebentar sesudah mengunci lalu
- * memudar, dan muncul lagi setiap layar diketuk.
+ * gesture mati. Tombol LOCK DIAM DI SLOTNYA (konsep Veo
+ * 2026-11-08): wadah tempat slot LOCK berada tetap dirender,
+ * tombol-tombol lain di dalamnya diganti spacer tak terlihat,
+ * jadi yang tersisa hanya LOCK sebagai tombol buka kunci, persis
+ * di tempatnya — tampil sebentar sesudah mengunci lalu memudar,
+ * dan muncul lagi setiap layar diketuk.
  *
  * Stateless untuk state player: semua state dari [uiState], semua
  * aksi lewat callback. Visibilitas kontrol adalah state lokal layar.
@@ -129,7 +132,12 @@ fun PlayerScreen(
     // penangkap ketuk di bawah).
     var lockButtonVisible by remember { mutableStateOf(false) }
     LaunchedEffect(uiState.isLocked) {
-        if (uiState.isLocked) lockButtonVisible = true
+        if (uiState.isLocked) {
+            lockButtonVisible = true
+        } else {
+            // Kunci baru dibuka: kontrol tampil penuh lagi.
+            controlsVisible = true
+        }
     }
     LaunchedEffect(uiState.isLocked, lockButtonVisible) {
         if (uiState.isLocked && lockButtonVisible) {
@@ -149,6 +157,10 @@ fun PlayerScreen(
         onLock = { noteInteraction(); onLockClick() }
     )
     val layout = uiState.playerUiConfig.controlLayoutConfig
+    // Wadah tempat slot LOCK tinggal saat ini (kanan atas atau
+    // gugus bawah) — sanitized() menjamin LOCK ada tepat di satu
+    // area; saat terkunci hanya wadah itulah yang tetap dirender.
+    val lockInTopBar = ControlSlot.LOCK in layout.topRightSlots
 
     Box(
         modifier = modifier
@@ -207,9 +219,16 @@ fun PlayerScreen(
             else -> Unit
         }
 
-        // Bar atas: meluncur ke atas keluar layar saat kontrol sembunyi.
+        // Bar atas: meluncur ke atas keluar layar saat kontrol
+        // sembunyi. Saat TERKUNCI bar hanya tampil bila slot LOCK
+        // tinggal di kanan atas, dan isinya digelapkan kecuali
+        // tombol LOCK di slotnya sendiri (lockedOnly).
         AnimatedVisibility(
-            visible = controlsVisible && !uiState.isLocked,
+            visible = if (uiState.isLocked) {
+                lockButtonVisible && lockInTopBar
+            } else {
+                controlsVisible
+            },
             enter = slideInVertically { -it } + fadeIn(),
             exit = slideOutVertically { -it } + fadeOut(),
             modifier = Modifier.align(Alignment.TopCenter)
@@ -222,7 +241,8 @@ fun PlayerScreen(
                 actions = controlActions,
                 onBackClick = onBackClick,
                 playbackMode = uiState.playbackMode,
-                onPlaybackModeSelected = onPlaybackModeSelected
+                onPlaybackModeSelected = onPlaybackModeSelected,
+                lockedOnly = uiState.isLocked
             )
         }
 
@@ -259,52 +279,47 @@ fun PlayerScreen(
             }
         }
 
-        // Tombol melayang kiri tengah (area layout kiri tengah;
-        // bawaan LOCK). Tidak terkunci: isinya slot layout dan ia
-        // ikut tampil/sembunyi bersama kontrol lain. Terkunci: ia
-        // satu-satunya yang tersisa dan selalu tombol LOCK (buka
-        // kunci) di posisi ini, apa pun isi slot layout-nya.
-        AnimatedVisibility(
-            visible = if (uiState.isLocked) lockButtonVisible else controlsVisible,
-            enter = slideInHorizontally { -it } + fadeIn(),
-            exit = slideOutHorizontally { -it } + fadeOut(),
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .padding(start = 8.dp)
-        ) {
-            ControlSlotButton(
-                slot = if (uiState.isLocked) ControlSlot.LOCK else layout.middleLeftSlot,
-                uiState = uiState,
-                actions = controlActions
-            )
-        }
-
         // Gugus bawah (seekbar + tombol): meluncur ke bawah keluar
-        // layar saat kontrol sembunyi.
+        // layar saat kontrol sembunyi. Saat TERKUNCI gugus hanya
+        // tampil bila slot LOCK tinggal di sini; seekbar diganti
+        // ruang kosong setinggi dirinya dan tombol lain jadi
+        // spacer (lockedOnly), jadi LOCK tetap persis di slotnya.
         AnimatedVisibility(
-            visible = controlsVisible && !uiState.isLocked,
+            visible = if (uiState.isLocked) {
+                lockButtonVisible && !lockInTopBar
+            } else {
+                controlsVisible
+            },
             enter = slideInVertically { it } + fadeIn(),
             exit = slideOutVertically { it } + fadeOut(),
             modifier = Modifier.align(Alignment.BottomCenter)
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
-                // Seekbar digeser turun mendekati baris tombol (perintah
-                // Veo 2026-11-07: ±50% dari jarak semula). Offset hanya
-                // memindah gambar + area sentuhnya, tinggi gugus tidak
-                // berubah; besarnya di Constants.PLAYER_SEEK_BAR_DROP_DP.
-                SeekBarComponent(
-                    positionMs = uiState.currentPositionMs,
-                    durationMs = uiState.durationMs,
-                    onSeekTo = { noteInteraction(); onSeekTo(it) },
-                    previewPositionMs = uiState.seekPreviewMs,
-                    modifier = Modifier.offset(
-                        y = Constants.PLAYER_SEEK_BAR_DROP_DP.dp
+                if (uiState.isLocked) {
+                    // Ruang kosong setinggi seekbar (Slider Material
+                    // 48dp) supaya baris tombol tidak bergeser.
+                    Box(Modifier.fillMaxWidth().height(48.dp))
+                } else {
+                    // Seekbar digeser turun mendekati baris tombol
+                    // (perintah Veo 2026-11-07: ±50% dari jarak
+                    // semula). Offset hanya memindah gambar + area
+                    // sentuhnya, tinggi gugus tidak berubah;
+                    // besarnya di Constants.PLAYER_SEEK_BAR_DROP_DP.
+                    SeekBarComponent(
+                        positionMs = uiState.currentPositionMs,
+                        durationMs = uiState.durationMs,
+                        onSeekTo = { noteInteraction(); onSeekTo(it) },
+                        previewPositionMs = uiState.seekPreviewMs,
+                        modifier = Modifier.offset(
+                            y = Constants.PLAYER_SEEK_BAR_DROP_DP.dp
+                        )
                     )
-                )
+                }
                 PlayerControls(
                     layout = layout,
                     uiState = uiState,
-                    actions = controlActions
+                    actions = controlActions,
+                    lockedOnly = uiState.isLocked
                 )
             }
         }

@@ -9,7 +9,7 @@ import kotlinx.serialization.Serializable
  * Yang sudah berfungsi: PLAY_PAUSE, PREVIOUS, NEXT, ORIENTATION,
  * CAPTURE, SPEED, MUTE (tombol bisu, tambahan Veo 2026-11-04), dan
  * LOCK (kunci kontrol, fitur Veo 2026-11-07 — rumah bawaannya di
- * area kiri tengah layar). SCREEN_RATIO masih menunggu fiturnya;
+ * kiri bawah sejak konsep fix 2026-11-08). SCREEN_RATIO masih menunggu fiturnya;
  * ia tidak ditawarkan editor dan tidak dirender player (slot-nya
  * diperlakukan seperti EMPTY).
  */
