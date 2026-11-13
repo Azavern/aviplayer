@@ -142,6 +142,9 @@ class PlayerViewModel @Inject constructor(
             )
             _uiState.update { it.copy(currentPositionMs = lastPosition) }
             playerManager.prepare(path, startPositionMs = lastPosition)
+            // RP4: panaskan retriever capture untuk video ini, supaya
+            // capture pertama tidak membayar cold init setDataSource.
+            frameCapturer.prepare(path)
             playerManager.setSpeed(_uiState.value.playbackSpeed)
             playerManager.setMuted(_uiState.value.isMuted)
             applyRepeatMode()
@@ -155,6 +158,10 @@ class PlayerViewModel @Inject constructor(
         if (playerManager.isReleased && state.videoPath.isNotBlank()) {
             playerManager.setEventListener(PlayerEventListener { event -> onPlayerEvent(event) })
             playerManager.prepare(state.videoPath, startPositionMs = state.currentPositionMs)
+            // RP4: retriever capture biasanya masih hangat (tidak
+            // dilepas saat onStop), jadi ini hanya no-op murah — dan
+            // menutup celah bila retriever sempat dilepas.
+            viewModelScope.launch { frameCapturer.prepare(state.videoPath) }
             playerManager.setSpeed(state.playbackSpeed)
             playerManager.setMuted(state.isMuted)
             applyRepeatMode()
@@ -506,6 +513,8 @@ class PlayerViewModel @Inject constructor(
     override fun onCleared() {
         positionTicker?.cancel()
         playerManager.release()
+        // RP4: lepas retriever capture (sinkron, tanpa coroutine).
+        frameCapturer.release()
         super.onCleared()
     }
 
