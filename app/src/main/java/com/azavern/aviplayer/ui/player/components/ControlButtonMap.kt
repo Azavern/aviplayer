@@ -31,7 +31,6 @@ import com.azavern.aviplayer.R
 import com.azavern.aviplayer.data.model.ControlSlot
 import com.azavern.aviplayer.data.model.OrientationMode
 import com.azavern.aviplayer.ui.player.PlayerUiState
-import java.util.Locale
 
 /**
  * Kumpulan aksi kontrol player, diteruskan sebagai satu objek ke
@@ -134,7 +133,10 @@ fun ControlSlotButton(
 
         ControlSlot.SPEED -> TextButton(onClick = actions.onSpeed, modifier = modifier) {
             Text(
-                text = String.format(Locale.US, "%.1f×", uiState.playbackSpeed),
+                // Nilai apa adanya, sama seperti indikator hold-speed
+                // (GestureOverlay): "%.1f" membulatkan 0.75 → "0.8"
+                // dan 1.25 → "1.3" — ketahuan Veo 2026-11-13.
+                text = "${uiState.playbackSpeed}×",
                 color = Color.White,
                 style = MaterialTheme.typography.titleSmall
             )
