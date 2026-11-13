@@ -123,6 +123,7 @@ class PlayerActivity : ComponentActivity() {
                     onRotateClick = viewModel::cycleOrientationMode,
                     onBackClick = { finish() },
                     onSpeedClick = viewModel::cycleSpeed,
+                    onSetPlaybackSpeed = viewModel::setPlaybackSpeed,
                     onBrightnessChange = viewModel::adjustBrightness,
                     onVolumeChange = viewModel::adjustVolume,
                     onSeekPreview = viewModel::onSeekPreview,

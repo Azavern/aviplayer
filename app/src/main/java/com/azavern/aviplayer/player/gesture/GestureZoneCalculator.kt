@@ -1,5 +1,6 @@
 package com.azavern.aviplayer.player.gesture
 
+import com.azavern.aviplayer.utils.Constants
 import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.sign
@@ -68,5 +69,19 @@ object GestureZoneCalculator {
         val fraction = (dx / screenWidth).coerceIn(-1f, 1f)
         val curved = sign(fraction) * abs(fraction).pow(SEEK_CURVE_EXPONENT)
         return (curved * durationMs * SEEK_SENSITIVITY).toLong()
+    }
+
+    /**
+     * Satu langkah (atau beberapa) antar level speed selagi menahan
+     * (RP5, perintah Veo 2026-11-13). [steps] positif = naik level
+     * (geser kanan), negatif = turun (geser kiri); dijepit ke ujung
+     * daftar (0.5 / 2.0). Daftarnya sama dengan Constants.SPEED_LEVELS
+     * (tombol speed) — satu sumber kebenaran.
+     */
+    fun stepSpeedLevel(current: Float, steps: Int): Float {
+        val levels = Constants.SPEED_LEVELS
+        val index = levels.indexOf(current).takeIf { it >= 0 }
+            ?: levels.indexOf(1.0f)
+        return levels[(index + steps).coerceIn(levels.indices)]
     }
 }

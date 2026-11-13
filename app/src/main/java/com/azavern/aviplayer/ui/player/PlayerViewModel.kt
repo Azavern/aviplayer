@@ -14,6 +14,7 @@ import com.azavern.aviplayer.player.core.PlayerState
 import com.azavern.aviplayer.player.capture.VideoFrameCapturer
 import com.azavern.aviplayer.player.core.VideoPlayerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import com.azavern.aviplayer.utils.Constants
 import com.azavern.aviplayer.utils.FileUtils
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -458,11 +459,24 @@ class PlayerViewModel @Inject constructor(
 
     /** Tombol kecepatan: bersiklus 0.5 → 0.75 → 1.0 → 1.25 → 1.5 → 2.0 → 0.5. */
     fun cycleSpeed() {
-        val speeds = listOf(0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f)
+        val speeds = Constants.SPEED_LEVELS
         val currentIndex = speeds.indexOf(_uiState.value.playbackSpeed)
         val next = speeds[(currentIndex + 1) % speeds.size]
         playerManager.setSpeed(next)
         _uiState.update { it.copy(playbackSpeed = next) }
+    }
+
+    /**
+     * Atur kecepatan putar langsung (RP5 hold-speed): dipakai gesture
+     * tekan-tahan. Nilai dijepit ke rentang daftar level (0.5–2.0).
+     * Tidak seperti cycleSpeed, tidak memutar daftar.
+     */
+    fun setPlaybackSpeed(speed: Float) {
+        val clamped = speed.coerceIn(
+            Constants.SPEED_LEVELS.first(), Constants.SPEED_LEVELS.last()
+        )
+        playerManager.setSpeed(clamped)
+        _uiState.update { it.copy(playbackSpeed = clamped) }
     }
 
     /** Siklus mode orientasi AUTO → LANDSCAPE → PORTRAIT → AUTO (Bagian 10F). */

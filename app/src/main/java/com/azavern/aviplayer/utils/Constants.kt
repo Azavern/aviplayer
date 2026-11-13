@@ -68,6 +68,17 @@ object Constants {
     // drag vertikal tetap memakai touchSlop sistem.
     const val GESTURE_SEEK_START_DP = 4
 
+    /** Daftar level kecepatan putar (dipakai tombol speed + hold-speed RP5). */
+    val SPEED_LEVELS = listOf(0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f)
+
+    // ---- Hold-speed: tekan-tahan untuk kecepatan sementara (RP5, perintah Veo 2026-11-13) ----
+    // Jarak geser horizontal untuk satu langkah level speed selagi
+    // menahan (geser kiri = turun level, geser kanan = naik level,
+    // maks 2.0). Jarak geser ke bawah untuk mengunci speed di level
+    // saat itu — shortcut tombol speed: lepas jari pun speed tetap.
+    const val HOLD_SPEED_STEP_DP = 48
+    const val HOLD_SPEED_LOCK_DP = 48
+
     /**
      * Jarak turun seekbar mendekati baris tombol di bawahnya (dp,
      * perintah Veo 2026-11-07: turunkan ±50% dari jarak semula).

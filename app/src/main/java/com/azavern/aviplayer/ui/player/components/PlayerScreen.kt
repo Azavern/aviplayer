@@ -84,6 +84,7 @@ fun PlayerScreen(
     onRotateClick: () -> Unit,
     onBackClick: () -> Unit,
     onSpeedClick: () -> Unit,
+    onSetPlaybackSpeed: (Float) -> Unit,
     onBrightnessChange: (Float) -> Unit,
     onVolumeChange: (Float) -> Unit,
     onSeekPreview: (Long) -> Unit,
@@ -228,6 +229,9 @@ fun PlayerScreen(
                     controlsVisible = !controlsVisible
                     noteInteraction()
                 },
+                // RP5: hold-speed TIDAK memakai noteInteraction() —
+                // menahan tidak boleh membangunkan kontrol (aturan RP1).
+                onHoldSpeedChange = onSetPlaybackSpeed,
                 modifier = Modifier.fillMaxSize()
             )
         }

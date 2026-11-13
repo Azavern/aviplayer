@@ -2,7 +2,9 @@ package com.azavern.aviplayer.ui.player.components
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
+import android.os.SystemClock
 import androidx.compose.foundation.background
+import kotlinx.coroutines.withTimeoutOrNull
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
@@ -31,6 +33,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import com.azavern.aviplayer.R
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -71,6 +75,15 @@ import kotlin.math.roundToInt
  *   kontrol player. Supaya tidak tertukar dengan paruh pertama
  *   double tap, aksinya ditunda sampai jendela double tap (300 ms)
  *   lewat tanpa ketukan kedua; double tap membatalkannya.
+ * - Tekan-TAHAN (RP5, perintah Veo 2026-11-13): jari diam selama
+ *   jendela long-press sistem (±500 ms) → kecepatan sementara 2x.
+ *   Sambil menahan, geser horizontal melangkah antar level speed
+ *   (kiri turun, kanan naik, maks 2.0, tiap 48dp satu langkah);
+ *   geser ke bawah mengunci speed di level itu (shortcut tombol
+ *   speed). Lepas jari → kembali ke 1.0, kecuali sudah dikunci.
+ *   Tahan tidak membangunkan kontrol (aturan RP1) dan tidak berebut
+ *   dengan drag biasa: drag yang bergerak sebelum 500 ms tetap
+ *   seek/brightness/volume seperti biasa.
  *
  * Sentuhan yang sudah dikonsumsi tombol/slider (down.isConsumed)
  * diabaikan sepenuhnya, jadi gesture tidak berebut dengan kontrol.
@@ -101,11 +114,13 @@ fun GestureOverlay(
     onSeekBackward: () -> Unit,
     onTogglePlayPause: () -> Unit,
     onSingleTap: () -> Unit,
+    onHoldSpeedChange: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val stateRef = rememberUpdatedState(uiState)
     val singleTapRef = rememberUpdatedState(onSingleTap)
     var levelFeedback by remember { mutableStateOf<LevelFeedback?>(null) }
+    var holdFeedback by remember { mutableStateOf<HoldSpeedFeedback?>(null) }
     var ripple by remember { mutableStateOf<RippleState?>(null) }
     var lastTap by remember { mutableStateOf<TapRecord?>(null) }
     var pendingSingleTapAt by remember { mutableStateOf<Long?>(null) }
@@ -156,9 +171,42 @@ fun GestureOverlay(
                     // RP1: ambang mulai drag seek horizontal lebih
                     // kecil dari touchSlop sistem (lihat Constants).
                     val seekStartPx = Constants.GESTURE_SEEK_START_DP.dp.toPx()
+                    // RP5: batas waktu tekan-tahan (long-press sistem).
+                    // Bila tidak ada event sampai batas ini dan jari
+                    // belum bergerak, tahan aktif → kecepatan 2x.
+                    val holdDeadlineMs = down.uptimeMillis +
+                        viewConfiguration.longPressTimeoutMillis
+                    val holdStepPx = Constants.HOLD_SPEED_STEP_DP.dp.toPx()
+                    val holdLockPx = Constants.HOLD_SPEED_LOCK_DP.dp.toPx()
+                    var holding = false
+                    var holdSpeed = Constants.SPEED_LEVELS.last()
+                    var holdLocked = false
+                    var lastStepX = startX
 
                     while (released == null) {
-                        val event = awaitPointerEvent()
+                        // RP5: selagi belum bergerak & belum menahan,
+                        // tunggu event berikutnya dengan batas
+                        // long-press; habis batas tanpa event = jari
+                        // diam → tahan aktif. withTimeoutOrNull tidak
+                        // mengonsumsi event apa pun saat timeout.
+                        val event = if (!holding && !moved) {
+                            val remaining = holdDeadlineMs - SystemClock.uptimeMillis()
+                            val next = if (remaining > 0) {
+                                withTimeoutOrNull(remaining) { awaitPointerEvent() }
+                            } else {
+                                null
+                            }
+                            if (next == null) {
+                                holding = true
+                                onHoldSpeedChange(holdSpeed)
+                                holdFeedback = HoldSpeedFeedback(holdSpeed, locked = false)
+                                awaitPointerEvent()
+                            } else {
+                                next
+                            }
+                        } else {
+                            awaitPointerEvent()
+                        }
                         val change = event.changes.firstOrNull { it.id == down.id } ?: break
                         if (!change.pressed) {
                             released = change
@@ -186,7 +234,35 @@ fun GestureOverlay(
                         }
                         if (moved) {
                             change.consume()
-                            when (horizontal) {
+                            if (holding) {
+                                // Mode tahan: gerakan dimiliki speed —
+                                // bukan seek/brightness/volume.
+                                if (!holdLocked) {
+                                    // Langkah level dari geser
+                                    // horizontal (kiri turun, kanan
+                                    // naik); sisa jarak disimpan untuk
+                                    // langkah berikutnya.
+                                    val dxSinceStep = change.position.x - lastStepX
+                                    val steps = (dxSinceStep / holdStepPx).toInt()
+                                    if (steps != 0) {
+                                        holdSpeed = GestureZoneCalculator.stepSpeedLevel(
+                                            holdSpeed, steps
+                                        )
+                                        lastStepX += steps * holdStepPx
+                                        onHoldSpeedChange(holdSpeed)
+                                        holdFeedback = HoldSpeedFeedback(
+                                            holdSpeed, locked = false
+                                        )
+                                    }
+                                    // Kunci dari geser ke bawah.
+                                    if (totalDy > holdLockPx) {
+                                        holdLocked = true
+                                        holdFeedback = HoldSpeedFeedback(
+                                            holdSpeed, locked = true
+                                        )
+                                    }
+                                }
+                            } else when (horizontal) {
                                 // Horizontal = seek, tanpa memandang area mulai.
                                 true -> {
                                     val deltaMs = GestureZoneCalculator.calculateSeekDeltaMs(
@@ -221,6 +297,14 @@ fun GestureOverlay(
                     if (released == null) {
                         // Sentuhan hilang di tengah jalan: batalkan pratinjau.
                         onSeekClear()
+                        // Terputus saat menahan: kembali ke normal bila
+                        // belum dikunci (sama seperti lepas biasa).
+                        if (holding && !holdLocked) onHoldSpeedChange(1.0f)
+                    } else if (holding) {
+                        // Lepas sesudah menahan: kembali ke 1.0 kecuali
+                        // dikunci. Bukan ketukan — jangan jadwalkan
+                        // tap tunggal.
+                        if (!holdLocked) onHoldSpeedChange(1.0f)
                     } else if (!moved) {
                         // Tap: cek double tap pada area ketuk yang sama.
                         val tapZone = tapZoneOf(startX, size.width.toFloat())
@@ -288,6 +372,7 @@ fun GestureOverlay(
                         onSeekCommit()
                     }
                     levelFeedback = null
+                    holdFeedback = null
                 }
             }
     ) {
@@ -299,6 +384,31 @@ fun GestureOverlay(
                     .align(Alignment.TopCenter)
                     .padding(top = 72.dp)
             )
+        }
+
+        // Feedback hold-speed (RP5): kecepatan sementara + status kunci,
+        // di tengah atas (tidak pernah bersamaan dengan feedback vertikal).
+        holdFeedback?.let { feedback ->
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 72.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "${feedback.speed}×",
+                    color = Color.White,
+                    style = MaterialTheme.typography.headlineMedium
+                )
+                if (feedback.locked) {
+                    Text(
+                        text = stringResource(R.string.player_hold_speed_locked),
+                        color = Color.White.copy(alpha = 0.8f),
+                        style = MaterialTheme.typography.labelMedium,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+            }
         }
 
         // Feedback pratinjau seek: posisi tujuan + selisihnya, di tengah.
@@ -324,6 +434,9 @@ fun GestureOverlay(
 private enum class LevelKind { BRIGHTNESS, VOLUME }
 
 private data class LevelFeedback(val kind: LevelKind, val fraction: Float)
+
+/** Kecepatan sementara selagi menahan + apakah sudah dikunci (RP5). */
+private data class HoldSpeedFeedback(val speed: Float, val locked: Boolean)
 
 /** Area khusus double tap: sepertiga layar (koreksi Veo 2026-11-04). */
 private enum class TapZone { BACKWARD, PAUSE, FORWARD }
