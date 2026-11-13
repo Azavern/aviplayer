@@ -28,6 +28,14 @@ import androidx.compose.ui.unit.dp
 private const val SPLASH_DURATION_MS = 4600f
 
 /**
+ * Durasi tampil splash di layar (RP3, perintah Veo 2026-11-13):
+ * 3000 ms. Timeline animasi TIDAK dipotong — melainkan dimainkan
+ * lebih cepat (4600/3000 ≈ 1,53×), supaya koreografi lengkap
+ * (termasuk kilat bloom penutup) tetap tampil utuh dalam 3 detik.
+ */
+private const val SPLASH_DISPLAY_MS = 3000f
+
+/**
  * Layar splash AviPlay: latar hitam, cahaya ambient biru & violet
  * di belakang logo, logo beranimasi per lapisan (lihat
  * [drawAviPlayLogo]), dan kilat bloom sebagai penutup.
@@ -37,9 +45,16 @@ private const val SPLASH_DURATION_MS = 4600f
  * melewati, dan bila sistem mematikan animasi (skala durasi
  * animator 0 / mode gerak dikurangi) splash langsung selesai —
  * padanan perilaku prefers-reduced-motion di demo.
+ *
+ * [onPreload] (RP3): pekerjaan pemuatan yang dijalankan selagi
+ * splash tampil — mis. memindai daftar video supaya beranda kebuka
+ * sudah terisi — di efeknya sendiri, tanpa menahan animasi.
  */
 @Composable
-fun SplashScreen(onFinished: () -> Unit) {
+fun SplashScreen(
+    onFinished: () -> Unit,
+    onPreload: (suspend () -> Unit)? = null
+) {
     val context = LocalContext.current
     var timeMs by remember { mutableFloatStateOf(0f) }
     var finished by remember { mutableStateOf(false) }
@@ -49,6 +64,12 @@ fun SplashScreen(onFinished: () -> Unit) {
             finished = true
             onFinished()
         }
+    }
+
+    // RP3: pemuatan latar (mis. scan video) jalan bersamaan dengan
+    // animasi, di efeknya sendiri — tidak menahan satu bingkai pun.
+    LaunchedEffect(Unit) {
+        onPreload?.invoke()
     }
 
     LaunchedEffect(Unit) {
@@ -66,8 +87,11 @@ fun SplashScreen(onFinished: () -> Unit) {
             val now = withFrameNanos { it }
             if (startNanos < 0L) startNanos = now
             val elapsedMs = (now - startNanos) / 1_000_000f
-            timeMs = elapsedMs.coerceAtMost(SPLASH_DURATION_MS)
-            if (elapsedMs >= SPLASH_DURATION_MS) break
+            // RP3: waktu animasi dipetakan dari waktu tampil —
+            // 3000 ms nyata memutar 4600 ms timeline (≈1,53×).
+            timeMs = (elapsedMs * SPLASH_DURATION_MS / SPLASH_DISPLAY_MS)
+                .coerceAtMost(SPLASH_DURATION_MS)
+            if (elapsedMs >= SPLASH_DISPLAY_MS) break
         }
         finishOnce()
     }

@@ -126,11 +126,21 @@ class HomeViewModel @Inject constructor(
         _uiState.update { it.copy(miniBarDismissed = true) }
     }
 
-    fun loadVideos(showLoading: Boolean = true) {
+    /**
+     * Muat daftar video. Biasanya memakai cache RP3 (hasil pemanasan
+     * splash / pemindaian sebelumnya); [forceRefresh] membuang cache
+     * dan memindai ulang — hanya untuk segarkan eksplisit.
+     */
+    fun loadVideos(showLoading: Boolean = true, forceRefresh: Boolean = false) {
         videoLoadJob?.cancel()
         videoLoadJob = viewModelScope.launch {
             if (showLoading) _uiState.update { it.copy(isLoading = true, error = null) }
-            videoRepository.getAllVideos()
+            val videosFlow = if (forceRefresh) {
+                videoRepository.refreshAllVideos()
+            } else {
+                videoRepository.getAllVideos()
+            }
+            videosFlow
                 .catch { e ->
                     _uiState.update {
                         it.copy(isLoading = false, isRefreshing = false, error = e.message)
@@ -243,7 +253,8 @@ class HomeViewModel @Inject constructor(
                 state.activeFolder != null ->
                     loadFolderVideos(state.activeFolder, showLoading = false)
                 state.searchQuery.isNotBlank() -> onSearchQueryChanged(state.searchQuery)
-                else -> loadVideos(showLoading = false)
+                // Segarkan eksplisit: buang cache RP3, pindai ulang.
+                else -> loadVideos(showLoading = false, forceRefresh = true)
             }
             HomeTab.FOLDER -> loadFolders()
             HomeTab.PLAYLIST -> loadPlaylists()
