@@ -60,6 +60,14 @@ object Constants {
     // Bawah ≈ gugus seekbar + tombol (122) + margin 2.
     const val GESTURE_BOTTOM_DEAD_ZONE_DP = 124
 
+    // ---- Ambang mulai drag seek horizontal (RP1, perintah Veo 2026-11-13) ----
+    // Gesekan horizontal yang SANGAT kecil harus tetap dibaca sebagai
+    // drag seek, bukan ketuk tunggal: dengan touchSlop sistem (±8dp)
+    // gesekan di bawah itu jatuh ke jalur tap dan malah membangunkan
+    // kontrol. Ambang ini hanya untuk arah horizontal yang dominan;
+    // drag vertikal tetap memakai touchSlop sistem.
+    const val GESTURE_SEEK_START_DP = 4
+
     /**
      * Jarak turun seekbar mendekati baris tombol di bawahnya (dp,
      * perintah Veo 2026-11-07: turunkan ±50% dari jarak semula).

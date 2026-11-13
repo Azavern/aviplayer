@@ -82,6 +82,12 @@ import kotlin.math.roundToInt
  * di pita bawah (area seekbar + tombol) diabaikan sepenuhnya — dua
  * area itu netral dari semua gesture di atas. Besarnya diatur di
  * Constants (GESTURE_TOP_DEAD_ZONE_DP / GESTURE_BOTTOM_DEAD_ZONE_DP).
+ *
+ * Ambang mulai drag seek horizontal (RP1, perintah Veo 2026-11-13):
+ * lebih kecil dari touchSlop sistem (Constants.GESTURE_SEEK_START_DP),
+ * supaya gesekan horizontal yang sangat kecil dibaca sebagai seek,
+ * bukan ketuk tunggal yang membangunkan kontrol. Drag vertikal tetap
+ * memakai touchSlop sistem.
  */
 @Composable
 fun GestureOverlay(
@@ -147,6 +153,9 @@ fun GestureOverlay(
                     var moved = false
                     var horizontal: Boolean? = null
                     var released: PointerInputChange? = null
+                    // RP1: ambang mulai drag seek horizontal lebih
+                    // kecil dari touchSlop sistem (lihat Constants).
+                    val seekStartPx = Constants.GESTURE_SEEK_START_DP.dp.toPx()
 
                     while (released == null) {
                         val event = awaitPointerEvent()
@@ -157,9 +166,23 @@ fun GestureOverlay(
                         }
                         totalDx = change.position.x - startX
                         totalDy = change.position.y - startY
-                        if (!moved && (abs(totalDx) > slop || abs(totalDy) > slop)) {
-                            moved = true
-                            horizontal = abs(totalDx) > abs(totalDy)
+                        if (!moved) {
+                            // Horizontal dominan + melewati ambang
+                            // kecil → drag seek: gesekan sangat kecil
+                            // tidak lagi jatuh ke jalur ketuk tunggal
+                            // dan membangunkan kontrol. Vertikal tetap
+                            // memakai touchSlop sistem.
+                            if (abs(totalDx) > seekStartPx &&
+                                abs(totalDx) > abs(totalDy)
+                            ) {
+                                moved = true
+                                horizontal = true
+                            } else if (abs(totalDy) > slop &&
+                                abs(totalDy) >= abs(totalDx)
+                            ) {
+                                moved = true
+                                horizontal = false
+                            }
                         }
                         if (moved) {
                             change.consume()

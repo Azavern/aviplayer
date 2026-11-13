@@ -54,9 +54,13 @@ import kotlinx.coroutines.delay
  *
  * Kontrol menyembunyikan diri (perintah Veo 2026-11-04): saat video
  * berjalan, sesudah 3 detik tanpa interaksi bar atas meluncur ke
- * atas dan gugus bawah meluncur ke bawah keluar layar. Saat jeda
- * kontrol selalu tampil. Ketuk sekali di area bukan tombol (lewat
- * GestureOverlay) membalik tampil/sembunyi kapan pun.
+ * atas dan gugus bawah meluncur ke bawah keluar layar. Jeda TIDAK
+ * lagi memaksa kontrol tampil (RP1, perintah Veo 2026-11-13):
+ * visibilitas kontrol hanya dimiliki ketuk tunggal (membalik tampil/
+ * sembunyi kapan pun, lewat GestureOverlay) + sembunyi otomatis saat
+ * video berjalan. Double-tap pause/skip dan drag seek tidak
+ * membangunkan kontrol — ketuk tunggal sesudahnya (ketukan ketiga)
+ * yang memunculkannya.
  *
  * Mode TERKUNCI (fitur LOCK, Veo 2026-11-07): semua kontrol dan
  * gesture mati. Tombol LOCK DIAM DI SLOTNYA (konsep Veo
@@ -117,10 +121,14 @@ fun PlayerScreen(
         lastInteractionAt = System.currentTimeMillis()
     }
 
-    // Video berhenti/jeda → kontrol selalu tampil.
-    LaunchedEffect(uiState.isPlaying) {
-        if (!uiState.isPlaying) controlsVisible = true
-    }
+    // RP1 (perintah Veo 2026-11-13): jeda TIDAK lagi memaksa kontrol
+    // tampil. Efek lama inilah yang membuat double-tap pause selalu
+    // diikuti semua tombol muncul — padahal maunya kontrol tetap
+    // sembunyi sampai ketuk tunggal (ketukan ketiga) memunculkannya.
+    // Visibilitas kontrol kini hanya dimiliki ketuk tunggal +
+    // sembunyi otomatis saat video berjalan (efek di bawah, yang
+    // memang hanya berjalan saat isPlaying, jadi saat jeda kontrol
+    // yang sedang tampil tetap tampil, yang sembunyi tetap sembunyi).
     // Sedang berjalan + kontrol tampil → sembunyikan sesudah jeda
     // tanpa interaksi; setiap interaksi mengulang hitungan dari awal.
     LaunchedEffect(
@@ -204,12 +212,18 @@ fun PlayerScreen(
                 uiState = uiState,
                 onBrightnessChange = { noteInteraction(); onBrightnessChange(it) },
                 onVolumeChange = { noteInteraction(); onVolumeChange(it) },
-                onSeekPreview = { noteInteraction(); onSeekPreview(it) },
-                onSeekCommit = { noteInteraction(); onSeekCommit() },
+                // RP1: aksi gesture (pause/skip/seek) TIDAK memakai
+                // noteInteraction() — aksi-aksi ini tidak boleh
+                // membangunkan kontrol. Yang membangunkan hanya
+                // ketuk tunggal (onSingleTap di bawah). Drag
+                // kecerahan/volume tetap memakai noteInteraction
+                // (kata Veo keduanya "aman-aman").
+                onSeekPreview = onSeekPreview,
+                onSeekCommit = onSeekCommit,
                 onSeekClear = onSeekClear,
-                onSeekForward = { noteInteraction(); onGestureSeekForward() },
-                onSeekBackward = { noteInteraction(); onGestureSeekBackward() },
-                onTogglePlayPause = { noteInteraction(); onTogglePlayPause() },
+                onSeekForward = onGestureSeekForward,
+                onSeekBackward = onGestureSeekBackward,
+                onTogglePlayPause = onTogglePlayPause,
                 onSingleTap = {
                     controlsVisible = !controlsVisible
                     noteInteraction()
